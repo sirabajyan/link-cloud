@@ -24,8 +24,7 @@ public class ArtifactService {
         this.repository = repository;
 
         if (artifactConfig.isInit()) {
-            this.initArtifacts(ArtifactEntity.Types.PACKAGE);
-            this.initArtifacts(ArtifactEntity.Types.RESOURCE);
+            this.initArtifacts();
         } else {
             log.info("Skipping artifact initialization due to configuration");
         }
@@ -69,6 +68,11 @@ public class ArtifactService {
 
     public List<ArtifactEntity> getArtifacts() {
         return this.repository.findAll();
+    }
+
+    public void initArtifacts() {
+        this.initArtifacts(ArtifactEntity.Types.PACKAGE);
+        this.initArtifacts(ArtifactEntity.Types.RESOURCE);
     }
 
     private void initArtifacts(ArtifactEntity.Types type) {

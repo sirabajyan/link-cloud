@@ -1,5 +1,5 @@
 artifact:
-  init: true
+  init: false
 loki:
   enabled: false
   url: ''

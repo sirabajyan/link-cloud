@@ -19,6 +19,17 @@ public class ArtifactController {
     }
 
     @Operation(
+            summary = "Initialize artifacts",
+            description = "Create or update artifacts based on packages/resources found on the classpath",
+            tags = {"Artifacts"},
+            operationId = "initArtifacts"
+    )
+    @PostMapping("/$init")
+    public void initArtifacts() {
+        this.artifactService.initArtifacts();
+    }
+
+    @Operation(
             summary = "Create or update an artifact",
             description = "Create or update an artifact of the specified type with the specified content",
             tags = {"Artifacts"},
