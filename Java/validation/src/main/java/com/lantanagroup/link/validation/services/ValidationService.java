@@ -14,7 +14,7 @@ import com.lantanagroup.link.validation.entities.ArtifactEntity;
 import com.lantanagroup.link.validation.entities.ResultEntity;
 import com.lantanagroup.link.validation.model.ResultModel;
 import com.lantanagroup.link.validation.repositories.ResultRepository;
-import net.sourceforge.plantuml.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.hl7.fhir.common.hapi.validation.support.CachingValidationSupport;
 import org.hl7.fhir.common.hapi.validation.support.InMemoryTerminologyServerValidationSupport;
 import org.hl7.fhir.common.hapi.validation.support.PrePopulatedValidationSupport;
