@@ -14,6 +14,7 @@ import com.lantanagroup.link.validation.entities.ArtifactEntity;
 import com.lantanagroup.link.validation.entities.ResultEntity;
 import com.lantanagroup.link.validation.model.ResultModel;
 import com.lantanagroup.link.validation.repositories.ResultRepository;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.hl7.fhir.common.hapi.validation.support.CachingValidationSupport;
 import org.hl7.fhir.common.hapi.validation.support.InMemoryTerminologyServerValidationSupport;
@@ -31,6 +32,7 @@ import org.springframework.stereotype.Service;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ForkJoinPool;
@@ -153,21 +155,18 @@ public class ValidationService {
     }
 
     private void loadResource(InputStream stream, String name) {
-        byte[] content;
-
+        // Remove HTML comments before parsing
+        // This avoids an error that occurs when:
+        //   - The CQF tooling emits raw CQL in Library.text (as an HTML comment)
+        //   - The CQL contains the string "--" (which is invalid in an HTML comment)
+        String json;
         try {
-            content = stream.readAllBytes();
+            json = IOUtils.toString(stream, StandardCharsets.UTF_8)
+                    .replaceAll("<!--.+?-->", "");
         } catch (IOException e) {
             log.error("Error reading resource {}", name, e);
             return;
         }
-
-        String json = new String(content)
-                // replace all "\\-------" with "" otherwise it is invalid JSON
-                // have seen this pattern several times in libraries to separate sections of the cql
-                .replaceAll("\\/\\/\\-+", "")
-                // replace all "&copy;" with "" otherwise it is invalid JSON
-                .replaceAll("&copy;", "");
 
         try {
             Resource resource = (Resource) this.parser.parseResource(json);
