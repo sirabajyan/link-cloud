@@ -40,7 +40,7 @@ public class ValidationService {
     private static final Logger log = LoggerFactory.getLogger(ValidationService.class);
     private final IParser parser;
 
-    private final List<String> allowedResourceTypes = List.of("StructureDefinition", "ValueSet", "CodeSystem", "ImplementationGuide", "Measure", "Library");
+    private final List<String> allowedResourceTypes = List.of("StructureDefinition", "ValueSet", "CodeSystem");
     private final ArtifactService artifactService;
     private final ResultRepository resultRepository;
     private FhirValidator validator;
