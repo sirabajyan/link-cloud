@@ -173,7 +173,7 @@ public class ValidationService {
             Resource resource = (Resource) this.parser.parseResource(json);
             this.prePopulatedValidationSupport.addResource(resource);
         } catch (DataFormatException e) {
-            log.warn("Error loading resource {} with starting content {}", name, json.substring(0, 100), e);
+            log.warn("Error loading resource {} with starting content {}", name, StringUtils.truncate(json, 100), e);
         }
     }
 
