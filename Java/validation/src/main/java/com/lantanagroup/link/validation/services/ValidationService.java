@@ -134,23 +134,20 @@ public class ValidationService {
 
         log.info("Loading package into validator {}", artifactEntity.getName());
 
-        try {
-            InputStream stream = new ByteArrayInputStream(artifactEntity.getContent());
+        try (InputStream stream = new ByteArrayInputStream(artifactEntity.getContent())) {
             NpmPackage npmPackage = NpmPackage.fromPackage(stream);
             List<String> resourceNames = npmPackage.listResources(allowedResourceTypes);
 
             for (int i = 0; i < resourceNames.size(); i++) {
                 log.debug("Loading resource from package {}: {}", artifactEntity.getName(), resourceNames.get(i));
-                InputStream resourceContent = npmPackage.loadResource(resourceNames.get(i));
-
-                try {
+                try (InputStream resourceContent = npmPackage.loadResource(resourceNames.get(i))) {
                     this.loadResource(resourceContent, resourceNames.get(i));
-                } catch (DataFormatException e) {
+                } catch (IOException | DataFormatException e) {
                     log.warn("Error loading resource from package {}: {}", artifactEntity.getName(), resourceNames.get(i), e);
                 }
             }
         } catch (IOException e) {
-            throw new RuntimeException("Error loading artifact", e);
+            throw new RuntimeException("Error loading package", e);
         }
     }
 
@@ -183,10 +180,9 @@ public class ValidationService {
 
         log.info("Loading resource {}", artifactEntity.getName());
 
-        try {
-            InputStream stream = new ByteArrayInputStream(artifactEntity.getContent());
+        try (InputStream stream = new ByteArrayInputStream(artifactEntity.getContent())) {
             this.loadResource(stream, artifactEntity.getName());
-        } catch (DataFormatException e) {
+        } catch (IOException | DataFormatException e) {
             log.warn("Error loading resource {}", artifactEntity.getName(), e);
         }
     }
