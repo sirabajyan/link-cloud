@@ -138,12 +138,12 @@ public class ValidationService {
             NpmPackage npmPackage = NpmPackage.fromPackage(stream);
             List<String> resourceNames = npmPackage.listResources(allowedResourceTypes);
 
-            for (int i = 0; i < resourceNames.size(); i++) {
-                log.debug("Loading resource from package {}: {}", artifactEntity.getName(), resourceNames.get(i));
-                try (InputStream resourceContent = npmPackage.loadResource(resourceNames.get(i))) {
-                    this.loadResource(resourceContent, resourceNames.get(i));
+            for (String resourceName : resourceNames) {
+                log.debug("Loading resource from package {}: {}", artifactEntity.getName(), resourceName);
+                try (InputStream resourceContent = npmPackage.loadResource(resourceName)) {
+                    this.loadResource(resourceContent, resourceName);
                 } catch (IOException | DataFormatException e) {
-                    log.warn("Error loading resource from package {}: {}", artifactEntity.getName(), resourceNames.get(i), e);
+                    log.warn("Error loading resource from package {}: {}", artifactEntity.getName(), resourceName, e);
                 }
             }
         } catch (IOException e) {
