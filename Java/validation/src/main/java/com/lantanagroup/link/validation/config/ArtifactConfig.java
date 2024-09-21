@@ -8,5 +8,5 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @Getter
 @Setter
 public class ArtifactConfig {
-    private boolean init = true;
+    private boolean init = false;
 }
