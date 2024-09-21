@@ -33,7 +33,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
-import java.util.concurrent.Executors;
 import java.util.concurrent.ForkJoinPool;
 
 @Service
@@ -59,10 +58,10 @@ public class ValidationService {
         this.parser = this.fhirContext.newJsonParser();
         this.parser.setParserErrorHandler(new LenientErrorHandler(false));
 
-        Executors.newSingleThreadExecutor().submit(this::initArtifacts);
+        initArtifacts();
     }
 
-    public void initArtifacts() {
+    private void initArtifacts() {
         log.info("Loading artifacts");
 
         this.prePopulatedValidationSupport = new PrePopulatedValidationSupport(this.fhirContext);

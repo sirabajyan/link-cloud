@@ -28,18 +28,6 @@ public class ValidationController {
     }
 
     @Operation(
-            summary = "Reload validation artifacts",
-            description = "Reload the artifacts from the database into validation so that the next validation will use the latest artifacts",
-            tags = {"Validation"},
-            operationId = "reloadArtifacts"
-    )
-    @PostMapping("/reload")
-    public void reloadArtifacts() {
-        log.info("Reloading artifacts in validation service");
-        this.validationService.initArtifacts();
-    }
-
-    @Operation(
             summary = "Validate a resource",
             description = "Validate a FHIR resource provided in the request against the FHIR conformance resources loaded in the validation service",
             tags = {"Validation"},
