@@ -9,7 +9,6 @@ import ca.uhn.fhir.validation.FhirValidator;
 import ca.uhn.fhir.validation.IValidatorModule;
 import ca.uhn.fhir.validation.ResultSeverityEnum;
 import ca.uhn.fhir.validation.ValidationResult;
-import com.lantanagroup.link.shared.fhir.FhirHelper;
 import com.lantanagroup.link.validation.entities.ArtifactEntity;
 import com.lantanagroup.link.validation.entities.ResultEntity;
 import com.lantanagroup.link.validation.model.ResultModel;
@@ -43,16 +42,21 @@ public class ValidationService {
     private final IParser parser;
 
     private final List<String> allowedResourceTypes = List.of("StructureDefinition", "ValueSet", "CodeSystem");
+    private final FhirContext fhirContext;
     private final ArtifactService artifactService;
     private final ResultRepository resultRepository;
     private FhirValidator validator;
     private PrePopulatedValidationSupport prePopulatedValidationSupport;
 
-    public ValidationService(ArtifactService artifactService, ResultRepository resultRepository) {
+    public ValidationService(
+            FhirContext fhirContext,
+            ArtifactService artifactService,
+            ResultRepository resultRepository) {
+        this.fhirContext = fhirContext;
         this.artifactService = artifactService;
         this.resultRepository = resultRepository;
 
-        this.parser = FhirHelper.getContext().newJsonParser();
+        this.parser = this.fhirContext.newJsonParser();
         this.parser.setParserErrorHandler(new LenientErrorHandler(false));
 
         Executors.newSingleThreadExecutor().submit(this::initArtifacts);
@@ -61,14 +65,13 @@ public class ValidationService {
     public void initArtifacts() {
         log.info("Loading artifacts");
 
-        FhirContext fhirContext = FhirHelper.getContext();
-        this.prePopulatedValidationSupport = new PrePopulatedValidationSupport(fhirContext);
+        this.prePopulatedValidationSupport = new PrePopulatedValidationSupport(this.fhirContext);
         ValidationSupportChain validationSupportChain = new ValidationSupportChain(
-                new DefaultProfileValidationSupport(fhirContext),
-                new InMemoryTerminologyServerValidationSupport(fhirContext),
+                new DefaultProfileValidationSupport(this.fhirContext),
+                new InMemoryTerminologyServerValidationSupport(this.fhirContext),
                 this.prePopulatedValidationSupport
         );
-        this.validator = fhirContext.newValidator();
+        this.validator = this.fhirContext.newValidator();
         this.validator.setExecutorService(ForkJoinPool.commonPool());
         IValidatorModule module = new FhirInstanceValidator(new CachingValidationSupport(validationSupportChain));
         this.validator.registerValidatorModule(module);
