@@ -2,18 +2,13 @@ package com.lantanagroup.link.validation.services;
 
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.context.support.DefaultProfileValidationSupport;
-import ca.uhn.fhir.parser.DataFormatException;
-import ca.uhn.fhir.parser.IParser;
-import ca.uhn.fhir.parser.LenientErrorHandler;
 import ca.uhn.fhir.validation.FhirValidator;
 import ca.uhn.fhir.validation.IValidatorModule;
 import ca.uhn.fhir.validation.ResultSeverityEnum;
 import ca.uhn.fhir.validation.ValidationResult;
-import com.lantanagroup.link.validation.entities.ArtifactEntity;
 import com.lantanagroup.link.validation.entities.ResultEntity;
 import com.lantanagroup.link.validation.model.ResultModel;
 import com.lantanagroup.link.validation.repositories.ResultRepository;
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.hl7.fhir.common.hapi.validation.support.CachingValidationSupport;
 import org.hl7.fhir.common.hapi.validation.support.InMemoryTerminologyServerValidationSupport;
@@ -23,24 +18,19 @@ import org.hl7.fhir.common.hapi.validation.validator.FhirInstanceValidator;
 import org.hl7.fhir.r4.model.OperationOutcome;
 import org.hl7.fhir.r4.model.Resource;
 import org.hl7.fhir.r4.model.StringType;
-import org.hl7.fhir.utilities.npm.NpmPackage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.web.context.annotation.RequestScope;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.concurrent.ForkJoinPool;
 
 @Service
+@RequestScope
 public class ValidationService {
     private static final Logger log = LoggerFactory.getLogger(ValidationService.class);
-    private final IParser parser;
 
-    private final List<String> allowedResourceTypes = List.of("StructureDefinition", "ValueSet", "CodeSystem");
     private final FhirContext fhirContext;
     private final ArtifactService artifactService;
     private final ResultRepository resultRepository;
@@ -55,33 +45,22 @@ public class ValidationService {
         this.artifactService = artifactService;
         this.resultRepository = resultRepository;
 
-        this.parser = this.fhirContext.newJsonParser();
-        this.parser.setParserErrorHandler(new LenientErrorHandler(false));
-
         initArtifacts();
     }
 
     private void initArtifacts() {
         log.info("Loading artifacts");
 
-        this.prePopulatedValidationSupport = new PrePopulatedValidationSupport(this.fhirContext);
         ValidationSupportChain validationSupportChain = new ValidationSupportChain(
                 new DefaultProfileValidationSupport(this.fhirContext),
                 new InMemoryTerminologyServerValidationSupport(this.fhirContext),
-                this.prePopulatedValidationSupport
+                this.artifactService.getValidationSupport()
         );
         this.validator = this.fhirContext.newValidator();
         this.validator.setExecutorService(ForkJoinPool.commonPool());
         IValidatorModule module = new FhirInstanceValidator(new CachingValidationSupport(validationSupportChain));
         this.validator.registerValidatorModule(module);
         this.validator.setConcurrentBundleValidation(true);
-
-        this.artifactService.getArtifacts().forEach(a -> {
-            switch (a.getType()) {
-                case PACKAGE -> this.loadPackage(a);
-                case RESOURCE -> this.loadResource(a);
-            }
-        });
 
         log.info("Done loading artifacts into validator");
     }
@@ -127,66 +106,6 @@ public class ValidationService {
         this.resultRepository.deleteByTenantIdAndReportId(tenantId, reportId);
         List<ResultEntity> entities = results.stream().map(r -> new ResultEntity(r, tenantId, reportId)).toList();
         this.resultRepository.saveAll(entities);
-    }
-
-    private void loadPackage(ArtifactEntity artifactEntity) {
-        if (artifactEntity.getType() != ArtifactEntity.Types.PACKAGE) {
-            throw new RuntimeException("Artifact is not an NPM package");
-        }
-
-        log.info("Loading package into validator {}", artifactEntity.getName());
-
-        try (InputStream stream = new ByteArrayInputStream(artifactEntity.getContent())) {
-            NpmPackage npmPackage = NpmPackage.fromPackage(stream);
-            List<String> resourceNames = npmPackage.listResources(allowedResourceTypes);
-
-            for (String resourceName : resourceNames) {
-                log.debug("Loading resource from package {}: {}", artifactEntity.getName(), resourceName);
-                try (InputStream resourceContent = npmPackage.loadResource(resourceName)) {
-                    this.loadResource(resourceContent, resourceName);
-                } catch (IOException | DataFormatException e) {
-                    log.warn("Error loading resource from package {}: {}", artifactEntity.getName(), resourceName, e);
-                }
-            }
-        } catch (IOException e) {
-            throw new RuntimeException("Error loading package", e);
-        }
-    }
-
-    private void loadResource(InputStream stream, String name) {
-        // Remove HTML comments before parsing
-        // This avoids an error that occurs when:
-        //   - The CQF tooling emits raw CQL in Library.text (as an HTML comment)
-        //   - The CQL contains the string "--" (which is invalid in an HTML comment)
-        String json;
-        try {
-            json = IOUtils.toString(stream, StandardCharsets.UTF_8)
-                    .replaceAll("<!--.+?-->", "");
-        } catch (IOException e) {
-            log.error("Error reading resource {}", name, e);
-            return;
-        }
-
-        try {
-            Resource resource = (Resource) this.parser.parseResource(json);
-            this.prePopulatedValidationSupport.addResource(resource);
-        } catch (DataFormatException e) {
-            log.warn("Error loading resource {} with starting content {}", name, StringUtils.truncate(json, 100), e);
-        }
-    }
-
-    private void loadResource(ArtifactEntity artifactEntity) {
-        if (artifactEntity.getType() != ArtifactEntity.Types.RESOURCE) {
-            throw new RuntimeException("Artifact is not a resource");
-        }
-
-        log.info("Loading resource {}", artifactEntity.getName());
-
-        try (InputStream stream = new ByteArrayInputStream(artifactEntity.getContent())) {
-            this.loadResource(stream, artifactEntity.getName());
-        } catch (IOException | DataFormatException e) {
-            log.warn("Error loading resource {}", artifactEntity.getName(), e);
-        }
     }
 
     private static OperationOutcome.IssueSeverity getIssueSeverity(ResultSeverityEnum severity) {
