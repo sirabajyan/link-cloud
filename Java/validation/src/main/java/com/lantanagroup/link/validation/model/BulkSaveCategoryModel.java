@@ -11,7 +11,7 @@ import java.util.List;
  */
 @Getter
 @Setter
-public class BulkSaveCategory {
+public class BulkSaveCategoryModel {
     private String id;
     private boolean acceptable;
     private String guidance;

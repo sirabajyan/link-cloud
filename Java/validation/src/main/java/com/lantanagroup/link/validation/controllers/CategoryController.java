@@ -2,7 +2,7 @@ package com.lantanagroup.link.validation.controllers;
 
 import com.lantanagroup.link.validation.entities.CategoryEntity;
 import com.lantanagroup.link.validation.entities.CategoryRuleSetsEntity;
-import com.lantanagroup.link.validation.model.BulkSaveCategory;
+import com.lantanagroup.link.validation.model.BulkSaveCategoryModel;
 import com.lantanagroup.link.validation.model.CategoryRuleSetsModel;
 import com.lantanagroup.link.validation.model.LatestCategoryRuleSetsModel;
 import com.lantanagroup.link.validation.repositories.CategoryRepository;
@@ -126,7 +126,7 @@ public class CategoryController {
     @Operation(summary = "Bulk save categories and their rule sets", tags = {"Categories"})
     @PostMapping("/bulk")
     @Transactional
-    public void bulkSaveCategories(@RequestBody List<BulkSaveCategory> categories) {
+    public void bulkSaveCategories(@RequestBody List<BulkSaveCategoryModel> categories) {
         if (categories == null || categories.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Categories are required");
         } else if (categories.stream().anyMatch(category -> StringUtils.isEmpty(category.getId()))) {
@@ -134,7 +134,7 @@ public class CategoryController {
         }
 
         boolean hasDuplicateIds = categories.stream()
-                .collect(Collectors.groupingBy(BulkSaveCategory::getId))
+                .collect(Collectors.groupingBy(BulkSaveCategoryModel::getId))
                 .values()
                 .stream()
                 .anyMatch(ids -> ids.size() > 1);
@@ -149,7 +149,7 @@ public class CategoryController {
 
         log.info("Bulk saving {} categories", categories.size());
 
-        for (BulkSaveCategory category : categories) {
+        for (BulkSaveCategoryModel category : categories) {
             CategoryEntity categoryEntity = new CategoryEntity();
             categoryEntity.setId(category.getId());
             categoryEntity.setAcceptable(category.isAcceptable());
