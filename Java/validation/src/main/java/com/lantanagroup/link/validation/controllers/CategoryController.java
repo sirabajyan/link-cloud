@@ -1,12 +1,11 @@
 package com.lantanagroup.link.validation.controllers;
 
 import com.lantanagroup.link.validation.entities.CategoryEntity;
-import com.lantanagroup.link.validation.entities.CategoryRuleSetsEntity;
+import com.lantanagroup.link.validation.entities.CategoryRuleEntity;
 import com.lantanagroup.link.validation.model.BulkSaveCategoryModel;
-import com.lantanagroup.link.validation.model.CategoryRuleSetsModel;
-import com.lantanagroup.link.validation.model.LatestCategoryRuleSetsModel;
+import com.lantanagroup.link.validation.model.CategoryRuleModel;
 import com.lantanagroup.link.validation.repositories.CategoryRepository;
-import com.lantanagroup.link.validation.repositories.CategoryRuleSetsRepository;
+import com.lantanagroup.link.validation.repositories.CategoryRuleRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.transaction.Transactional;
@@ -16,6 +15,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -26,11 +26,11 @@ public class CategoryController {
     private static final Logger log = org.slf4j.LoggerFactory.getLogger(CategoryController.class);
 
     private final CategoryRepository categoryRepository;
-    private final CategoryRuleSetsRepository categoryRuleSetsRepository;
+    private final CategoryRuleRepository categoryRuleRepository;
 
-    public CategoryController(CategoryRepository categoryRepository, CategoryRuleSetsRepository categoryRuleSetsRepository) {
+    public CategoryController(CategoryRepository categoryRepository, CategoryRuleRepository categoryRuleRepository) {
         this.categoryRepository = categoryRepository;
-        this.categoryRuleSetsRepository = categoryRuleSetsRepository;
+        this.categoryRuleRepository = categoryRuleRepository;
     }
 
     @Operation(summary = "Create or update a category", tags = {"Categories"})
@@ -52,78 +52,54 @@ public class CategoryController {
     @Operation(summary = "Get all categories", tags = {"Categories"})
     @GetMapping
     public List<CategoryEntity> getCategories() {
-        String val = System.getProperty("loki.enabled");
-        return this.categoryRepository.findAll()
-                .stream().peek(category -> category.setRequireAllRuleSets(null))
-                .toList();
+        return this.categoryRepository.findAll();
     }
 
     @Operation(summary = "Get the latest version of rules for a category by ID", tags = {"Categories"})
     @GetMapping("/{categoryId}/rules")
-    public LatestCategoryRuleSetsModel getCategoryRules(@PathVariable String categoryId) {
-        CategoryRuleSetsEntity entity = this.categoryRuleSetsRepository.getLatestCategoryRules(categoryId);
-        LatestCategoryRuleSetsModel model = null;
+    public CategoryRuleModel getCategoryRules(@PathVariable String categoryId) {
+        CategoryRuleEntity categoryRule = this.categoryRuleRepository.getLatestByCategoryId(categoryId);
 
-        if (entity != null) {
-            model = new LatestCategoryRuleSetsModel();
-            model.setVersion(entity.getVersion());
-            model.setTimestamp(entity.getCreated());
-            model.setRequireAllRuleSets(entity.isRequireAllRuleSets());
-            model.setRuleSets(entity.getRuleSets());
+        if (categoryRule == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Category rules not found");
         }
 
-        return model;
+        return categoryRule.getModel();
     }
 
-    @Operation(summary = "Create or update rule sets for a category by ID", tags = {"Categories"})
+    @Operation(summary = "Create or update rules for a category by ID", tags = {"Categories"})
     @PostMapping("/{categoryId}/rules")
-    public void createOrUpdateCategoryRules(@PathVariable String categoryId, @RequestBody CategoryRuleSetsModel categoryRuleSets) {
+    public void createOrUpdateCategoryRules(@PathVariable String categoryId, @RequestBody CategoryRuleModel categoryRule) {
         if (StringUtils.isEmpty(categoryId)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Category ID is required");
         }
 
-        if (categoryRuleSets == null) {
+        if (categoryRule == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Category rules are required");
         }
 
-        if (categoryRuleSets.getRuleSets() == null || categoryRuleSets.getRuleSets().isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Category rule sets are required");
-        }
-
-        log.info("Creating/updating rule sets for category with ID: {}", categoryId);
+        log.info("Creating/updating rules for category with ID: {}", categoryId);
 
         CategoryEntity category = this.categoryRepository.findById(categoryId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Category not found"));
 
-        CategoryRuleSetsEntity entity = new CategoryRuleSetsEntity();
+        CategoryRuleEntity entity = new CategoryRuleEntity();
         entity.setCategory(category);
-        entity.setRequireAllRuleSets(categoryRuleSets.isRequireAllRuleSets());
-        entity.setRuleSets(categoryRuleSets.getRuleSets());
+        entity.setModel(categoryRule);
 
-        // Set the version of the new category rule set
-        CategoryRuleSetsEntity foundCategoryRules = this.categoryRuleSetsRepository.getLatestCategoryRules(categoryId);
-        entity.setVersion(foundCategoryRules != null ? foundCategoryRules.getVersion() + 1 : 1);
-
-        this.categoryRuleSetsRepository.save(entity);       // Always save a new category rule set version
+        this.categoryRuleRepository.save(entity);
     }
 
-    @Operation(summary = "Get the history of rule sets for a category by ID", tags = {"Categories"})
+    @Operation(summary = "Get the history of rules for a category by ID", tags = {"Categories"})
     @GetMapping("/{categoryId}/rules/history")
-    public List<LatestCategoryRuleSetsModel> getCategoryRulesHistory(@PathVariable String categoryId) {
-        return this.categoryRuleSetsRepository.findByCategoryId(categoryId)
-                .stream().map(entity -> {
-                    LatestCategoryRuleSetsModel model = new LatestCategoryRuleSetsModel();
-                    model.setVersion(entity.getVersion());
-                    model.setTimestamp(entity.getCreated());
-                    model.setRequireAllRuleSets(entity.isRequireAllRuleSets());
-                    model.setRuleSets(entity.getRuleSets());
-                    return model;
-                })
-                .sorted((a, b) -> b.getVersion() - a.getVersion())
+    public List<CategoryRuleModel> getCategoryRulesHistory(@PathVariable String categoryId) {
+        return this.categoryRuleRepository.findByCategoryId(categoryId).stream()
+                .sorted(Comparator.comparing(CategoryRuleEntity::getTimestamp, Comparator.reverseOrder()))
+                .map(CategoryRuleEntity::getModel)
                 .toList();
     }
 
-    @Operation(summary = "Bulk save categories and their rule sets", tags = {"Categories"})
+    @Operation(summary = "Bulk save categories and their rules", tags = {"Categories"})
     @PostMapping("/bulk")
     @Transactional
     public void bulkSaveCategories(@RequestBody List<BulkSaveCategoryModel> categories) {
@@ -134,17 +110,19 @@ public class CategoryController {
         }
 
         boolean hasDuplicateIds = categories.stream()
-                .collect(Collectors.groupingBy(BulkSaveCategoryModel::getId))
+                .collect(Collectors.groupingBy(BulkSaveCategoryModel::getId, Collectors.counting()))
                 .values()
                 .stream()
-                .anyMatch(ids -> ids.size() > 1);
+                .anyMatch(count -> count > 1);
 
         if (hasDuplicateIds) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Duplicate category IDs are not allowed");
         }
 
-        if (categories.stream().anyMatch(category -> category.getRuleSets() == null || category.getRuleSets().isEmpty())) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Rule sets are required for all categories");
+        boolean hasMissingRules = categories.stream().anyMatch(category -> category.getRule() == null);
+
+        if (hasMissingRules) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Rules are required for all categories");
         }
 
         log.info("Bulk saving {} categories", categories.size());
@@ -152,22 +130,17 @@ public class CategoryController {
         for (BulkSaveCategoryModel category : categories) {
             CategoryEntity categoryEntity = new CategoryEntity();
             categoryEntity.setId(category.getId());
+            categoryEntity.setTitle(category.getTitle());
+            categoryEntity.setSeverity(category.getSeverity());
             categoryEntity.setAcceptable(category.isAcceptable());
             categoryEntity.setGuidance(category.getGuidance());
-            categoryEntity.setRequireAllRuleSets(category.isRequireAllRuleSets());
             this.categoryRepository.save(categoryEntity);
 
-            if (category.getRuleSets() != null) {
-                CategoryRuleSetsEntity categoryRules = new CategoryRuleSetsEntity();
-                categoryRules.setCategory(categoryEntity);
-                categoryRules.setRuleSets(category.getRuleSets());
-
-                // Set the version of the new category rule set
-                CategoryRuleSetsEntity foundCategoryRules = this.categoryRuleSetsRepository.getLatestCategoryRules(category.getId());
-                categoryRules.setVersion(foundCategoryRules != null ? foundCategoryRules.getVersion() + 1 : 1);
-
-                this.categoryRuleSetsRepository.save(categoryRules);
-            }
+            CategoryRuleModel rule = category.getRule();
+            CategoryRuleEntity categoryRuleEntity = new CategoryRuleEntity();
+            categoryRuleEntity.setCategory(categoryEntity);
+            categoryRuleEntity.setModel(rule);
+            this.categoryRuleRepository.save(categoryRuleEntity);
         }
     }
 
@@ -176,7 +149,7 @@ public class CategoryController {
     @Transactional
     public void deleteCategory(@PathVariable String categoryId) {
         log.info("Deleting category with ID: {}", categoryId);
-        this.categoryRuleSetsRepository.deleteByCategoryId(categoryId);
+        this.categoryRuleRepository.deleteByCategoryId(categoryId);
         this.categoryRepository.deleteById(categoryId);
     }
 }

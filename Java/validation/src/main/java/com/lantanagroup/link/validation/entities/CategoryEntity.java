@@ -1,6 +1,7 @@
 package com.lantanagroup.link.validation.entities;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.lantanagroup.link.validation.model.CategorySeverity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
@@ -18,10 +19,14 @@ public class CategoryEntity {
     private String id;
 
     @Column(nullable = false)
+    private String title;
+
+    @Column(nullable = false)
+    private CategorySeverity severity;
+
+    @Column(nullable = false)
     private boolean acceptable;
 
     @Column(nullable = false)
     private String guidance;
-
-    private Boolean requireAllRuleSets = false;
 }
