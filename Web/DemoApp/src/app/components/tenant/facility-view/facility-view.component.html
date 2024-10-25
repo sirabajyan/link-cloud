@@ -1,0 +1,58 @@
+<div class="content">
+  <p>
+    <mat-toolbar class="page-header-bar" color="primary">
+      <span title="{{facilityConfig?.facilityId}}">{{facilityConfig?.facilityName}}</span>
+      <button mat-mini-fab aria-label="Edit Facility" matTooltip="Edit Facility" [routerLink]="['/tenant', 'facility', facilityId, 'edit']">
+        <mat-icon>edit</mat-icon>
+      </button>
+    </mat-toolbar>
+  </p>
+
+  <mat-card appearance="outlined">
+    <mat-card-header>
+      <mat-card-title>Reports</mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <table mat-table [dataSource]="reports" class="mat-elevation-z8">
+
+        <ng-container matColumnDef="measures">
+          <th mat-header-cell *matHeaderCellDef>Measure(s)</th>
+          <td mat-cell *matCellDef="let element">{{element.measures}}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="start">
+          <th mat-header-cell *matHeaderCellDef>Start</th>
+          <td mat-cell *matCellDef="let element">{{element.periodStart}}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="end">
+          <th mat-header-cell *matHeaderCellDef>End</th>
+          <td mat-cell *matCellDef="let element">{{element.periodEnd}}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="patients">
+          <th mat-header-cell *matHeaderCellDef>Patients</th>
+          <td mat-cell *matCellDef="let element">{{element.ipCount}} / {{element.censusCount}}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="status">
+          <th mat-header-cell *matHeaderCellDef>Status</th>
+          <td mat-cell *matCellDef="let element">{{element.status}}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="action-view">
+          <th mat-header-cell *matHeaderCellDef>&nbsp;</th>
+          <td mat-cell *matCellDef="let element">
+            <button mat-icon-button aria-label="Open report">
+              <mat-icon>open_in_new</mat-icon>
+            </button>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="['start', 'end', 'patients', 'status', 'action-view']"></tr>
+        <tr mat-row *matRowDef="let row; columns: ['start', 'end', 'patients', 'status', 'action-view'];"></tr>
+      </table>
+    </mat-card-content>
+  </mat-card>
+
+</div>
