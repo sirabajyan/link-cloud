@@ -8,7 +8,7 @@ namespace LantanaGroup.Link.Tenant.Models
     {
         [DataMember]
         public string? Id { get; set; }
-        public string? FacilityId { get; set; } = null!;
+        public string? FacilityId { get; set; }
         [DataMember]
         public string? FacilityName { get; set; }
         public List<ScheduledTaskDto>? ScheduledTasks { get; set; } = new List<ScheduledTaskDto>();
