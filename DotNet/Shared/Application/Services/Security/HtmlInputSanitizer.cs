@@ -18,7 +18,7 @@ namespace LantanaGroup.Link.Shared.Application.Services.Security
         public static string SanitizeAndRemoveNonAlphaNumeric(string input)
         {
             var sanitizedInput = Sanitize(input);
-            sanitizedInput = Regex.Replace(sanitizedInput, string.Empty, "^[a-zA-Z0-9/-]*$", RegexOptions.Compiled);
+            sanitizedInput = Regex.Replace(sanitizedInput, "^[a-zA-Z0-9/-]*$", string.Empty, RegexOptions.Compiled);
             return sanitizedInput;
         }
     }
