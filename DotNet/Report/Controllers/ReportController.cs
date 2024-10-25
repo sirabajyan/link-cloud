@@ -53,7 +53,7 @@ namespace LantanaGroup.Link.Report.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Exception in ReportController.GetSubmissionBundleForPatient for facility '{FacilityId}' and patient '{PatientId}'",HtmlInputSanitizer.SanitizeAndRemoveNonAlphaNumeric(facilityId), HtmlInputSanitizer.Sanitize(patientId));
+                _logger.LogError(ex, "Exception in ReportController.GetSubmissionBundleForPatient for facility '{FacilityId}' and patient '{PatientId}'",HtmlInputSanitizer.SanitizeAndRemove(facilityId), HtmlInputSanitizer.Sanitize(patientId));
                 return Problem(ex.Message, statusCode: 500);
             }
         }
