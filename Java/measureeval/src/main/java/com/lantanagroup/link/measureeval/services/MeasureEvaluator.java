@@ -4,6 +4,7 @@ import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.model.api.TemporalPrecisionEnum;
 import com.lantanagroup.link.measureeval.utils.ParametersUtils;
 import com.lantanagroup.link.measureeval.utils.StreamUtils;
+import org.cqframework.cql.cql2elm.LibraryBuilder;
 import org.hl7.fhir.r4.model.*;
 import org.opencds.cqf.fhir.api.Repository;
 import org.opencds.cqf.fhir.cql.EvaluationSettings;
@@ -46,6 +47,7 @@ public class MeasureEvaluator {
                 .setTerminologyParameterMode(RetrieveSettings.TERMINOLOGY_FILTER_MODE.FILTER_IN_MEMORY)
                 .setSearchParameterMode(RetrieveSettings.SEARCH_FILTER_MODE.FILTER_IN_MEMORY)
                 .setProfileMode(RetrieveSettings.PROFILE_MODE.DECLARED);
+        evaluationSettings.getCqlOptions().getCqlCompilerOptions().setSignatureLevel(LibraryBuilder.SignatureLevel.Overloads);
         evaluationSettings.getCqlOptions().getCqlEngineOptions().setDebugLoggingEnabled(isDebug);
 
         this.bundle = bundle;

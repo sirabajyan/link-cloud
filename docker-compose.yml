@@ -403,7 +403,7 @@ services:
       KafkaConnection__SaslPassword: ${KAFKA_SASL_CLIENT_PASSWORD}
       Serilog__WriteTo__0__Args__uri: http://loki:3100
       ConnectionStrings__Redis: redis_cache:6379
-      Cache__Enabled: true
+      Cache__Enabled: false
       EnableIntegrationFeature: true
       ProblemDetails__IncludeExceptionDetails: false
       LinkTokenService__EnableTokenGenerationEndpoint: true
@@ -468,6 +468,7 @@ services:
       Telemetry__EnableTelemetry: true
       Telemetry__EnableOtelCollector: true
       Telemetry__OtelCollectorEndpoint: http://otel-collector:4317
+      CORS__AllowedOrigins__0: 'http://localhost:4200'
     ports:
       - "8063:8063"
     build:

@@ -5,7 +5,7 @@ namespace LantanaGroup.Link.LinkAdmin.BFF.Infrastructure.Extensions.Security
 {
     public static class CorsServiceExtension
     {
-        public static IServiceCollection AddCorsService(this IServiceCollection services, Action<CorsServiceOptions>? options = null)
+        public static IServiceCollection AddCorsService(this IServiceCollection services, Serilog.ILogger logger, Action<CorsServiceOptions>? options = null)
         {
             var corsServiceOptions = new CorsServiceOptions();
             options?.Invoke(corsServiceOptions);
@@ -21,7 +21,7 @@ namespace LantanaGroup.Link.LinkAdmin.BFF.Infrastructure.Extensions.Security
                     if (corsServiceOptions.AllowCredentials)
                     {
                         cpb.AllowCredentials();
-                        cpb.WithHeaders(corsServiceOptions.AllowedHeaders is not null ? corsServiceOptions.AllowedHeaders : corsServiceOptions.DefaultAllowedHeaders);
+                        cpb.WithHeaders(corsServiceOptions.AllowedHeaders ?? corsServiceOptions.DefaultAllowedHeaders);
                     }
                 }
                 else
@@ -43,7 +43,9 @@ namespace LantanaGroup.Link.LinkAdmin.BFF.Infrastructure.Extensions.Security
                 cpb.WithExposedHeaders(corsServiceOptions.AllowedExposedHeaders is not null ? corsServiceOptions.AllowedExposedHeaders : corsServiceOptions.DefaultAllowedExposedHeaders);
                 cpb.SetPreflightMaxAge(TimeSpan.FromSeconds(corsServiceOptions.MaxAge));
 
-                options.AddPolicy(CorsConfig.DefaultCorsPolicyName, cpb.Build());
+                var policy = cpb.Build();
+                logger.Information("Adding CORS policy {policyName} with config: {policy}", CorsConfig.DefaultCorsPolicyName, policy);
+                options.AddPolicy(CorsConfig.DefaultCorsPolicyName, policy);
 
                 //add health check endpoint to cors policy
                 options.AddPolicy("HealthCheckPolicy", policy =>

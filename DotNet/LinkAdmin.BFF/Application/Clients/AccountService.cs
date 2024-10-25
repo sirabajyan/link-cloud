@@ -5,7 +5,6 @@ using LantanaGroup.Link.Shared.Application.Models.Configs;
 using Link.Authorization.Infrastructure;
 using Link.Authorization.Permissions;
 using Microsoft.Extensions.Options;
-using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Security.Claims;
 
@@ -18,18 +17,18 @@ namespace LantanaGroup.Link.LinkAdmin.BFF.Application.Clients
         private readonly IOptions<ServiceRegistry> _serviceRegistry;
         private readonly IOptions<AuthenticationSchemaConfig> _authenticationSchemaConfig;
         private readonly IOptions<LinkTokenServiceSettings> _tokenServiceConfig;
-        private readonly ICreateLinkBearerToken _createLinkBearerToken;
+        private readonly IServiceScopeFactory _serviceScopeFactory;
 
         private readonly ClaimsPrincipal _systemPrincipal;
 
-        public AccountService(ILogger<AccountService> logger, HttpClient client, IOptions<ServiceRegistry> serviceRegistry, IOptions<AuthenticationSchemaConfig> authenticationSchemaConfig, IOptions<LinkTokenServiceSettings> tokenServiceConfig, ICreateLinkBearerToken createLinkBearerToken)
+        public AccountService(ILogger<AccountService> logger, HttpClient client, IOptions<ServiceRegistry> serviceRegistry, IOptions<AuthenticationSchemaConfig> authenticationSchemaConfig, IOptions<LinkTokenServiceSettings> tokenServiceConfig, IServiceScopeFactory serviceScopeFactory)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _client = client ?? throw new ArgumentNullException(nameof(client));
             _serviceRegistry = serviceRegistry ?? throw new ArgumentNullException(nameof(serviceRegistry));
             _authenticationSchemaConfig = authenticationSchemaConfig ?? throw new ArgumentNullException(nameof(authenticationSchemaConfig));
             _tokenServiceConfig = tokenServiceConfig ?? throw new ArgumentNullException(nameof(tokenServiceConfig));
-            _createLinkBearerToken = createLinkBearerToken ?? throw new ArgumentNullException(nameof(createLinkBearerToken));
+            _serviceScopeFactory = serviceScopeFactory;
 
             _systemPrincipal = CreateSystemAccountPrincipal();
             InitHttpClient();
@@ -48,11 +47,15 @@ namespace LantanaGroup.Link.LinkAdmin.BFF.Application.Clients
 
             if (!_authenticationSchemaConfig.Value.EnableAnonymousAccess)
             {
+                using var scope = _serviceScopeFactory.CreateScope();
+                    
                 //create a bearer token for the system account
-                var bearerToken = await _createLinkBearerToken.ExecuteAsync(_systemPrincipal, 2);
+                var createLinkBearerToken = scope.ServiceProvider.GetRequiredService<ICreateLinkBearerToken>();
+                var bearerToken = await createLinkBearerToken.ExecuteAsync(_systemPrincipal, 2);
                 if (string.IsNullOrEmpty(bearerToken))
                 {
-                    _logger.LogLinkAdminTokenGenerationException("Failed to create bearer token for user account retrieval");
+                    _logger.LogLinkAdminTokenGenerationException(
+                        "Failed to create bearer token for user account retrieval");
                     return null;
                 }
 

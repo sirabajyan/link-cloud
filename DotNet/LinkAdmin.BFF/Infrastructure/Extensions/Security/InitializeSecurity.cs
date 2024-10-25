@@ -6,6 +6,7 @@ using Link.Authorization.Infrastructure.Extensions;
 using Link.Authorization.Policies;
 using Microsoft.AspNetCore.Authentication;
 using System.IdentityModel.Tokens.Jwt;
+using System.Runtime.CompilerServices;
 using System.Security.Claims;
 
 namespace LantanaGroup.Link.LinkAdmin.BFF.Infrastructure.Extensions.Security
@@ -224,13 +225,20 @@ namespace LantanaGroup.Link.LinkAdmin.BFF.Infrastructure.Extensions.Security
 
                 builder.AddPolicy(PolicyNames.IsLinkAdmin, AuthorizationPolicies.IsLinkAdmin());
             });
+            
+            // Configure CORS
+            ConfigureCors(services, configuration, logger, securityServiceOptions);
 
+            return services;
+        }
+        
+        public static void ConfigureCors(this IServiceCollection services, IConfiguration configuration, Serilog.ILogger logger, SecurityServiceOptions securityServiceOptions)
+        {
             // Configure CORS
             var corsConfig = configuration.GetSection(LinkAdminConstants.AppSettingsSectionNames.CORS).Get<CorsConfig>();
             if (corsConfig != null)
             {
-                logger.Debug("Registering CORS settings.");
-                services.AddCorsService(options =>
+                services.AddCorsService(logger, options =>
                 {
                     options.Environment = securityServiceOptions.Environment;
                     options.PolicyName = corsConfig.PolicyName;
@@ -245,9 +253,6 @@ namespace LantanaGroup.Link.LinkAdmin.BFF.Infrastructure.Extensions.Security
             {
                 throw new NullReferenceException("CORS Configuration was null.");
             }
-
-            return services;
-        
         }
 
         public class SecurityServiceOptions

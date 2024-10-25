@@ -144,7 +144,7 @@ static void RegisterServices(WebApplicationBuilder builder)
     }    
 
     // Add Secret Manager
-    if (builder.Configuration.GetValue<bool>("SecretManagement:Enabled"))
+    if (!allowAnonymousAccess && builder.Configuration.GetValue<bool>("SecretManagement:Enabled"))
     {
         var manager = builder.Configuration.GetValue<string>("SecretManagement:Manager")!;
         Log.Logger.Information("Registering Secret Manager with provider {provider} for the Link Admin API.", manager);
@@ -165,6 +165,10 @@ static void RegisterServices(WebApplicationBuilder builder)
     }
     else
     {
+        var securityServiceOptions = new InitializeSecurity.SecurityServiceOptions();
+        securityServiceOptions.Environment = builder.Environment;
+        builder.Services.ConfigureCors(builder.Configuration, Log.Logger, securityServiceOptions);
+        
         Log.Logger.Information("Enabling anonymous access for the Link Admin API.");
         //create anonymous access
         builder.Services.AddAuthorizationBuilder()        
@@ -213,8 +217,7 @@ static void RegisterServices(WebApplicationBuilder builder)
     {
         healthCheckBuilder.AddCheck<CacheHealthCheck>("Cache");
     }
-
-
+    
     // Add swagger generation
     builder.Services.AddEndpointsApiExplorer();    
     builder.Services.AddSwaggerGen(c =>
@@ -353,7 +356,6 @@ static void SetupMiddleware(WebApplication app)
     }
 
     app.UseRouting();
-    var corsConfig = app.Configuration.GetSection(ConfigurationConstants.AppSettings.CORS).Get<CorsSettings>();
     app.UseCors(CorsConfig.DefaultCorsPolicyName);
 
     //check for anonymous access

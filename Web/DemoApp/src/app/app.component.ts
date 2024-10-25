@@ -28,7 +28,7 @@ export class AppComponent implements OnInit, OnChanges {
 
     this.profileService.userProfileUpdated.subscribe(profile => {
       this.userProfile = profile;
-    });    
+    });
 
   }
 
@@ -37,18 +37,11 @@ export class AppComponent implements OnInit, OnChanges {
   }
 
   async ngOnInit(): Promise<void>{
-
     this.userProfile = await this.profileService.getProfile();
-
-
-    if (this.userProfile.email === '') {
-      this.authService.login();
-    }
 
     this.profileService.getProfileEvent().subscribe(profile => {
       this.userProfile = profile;
     });
-
   }
 
   logout() {

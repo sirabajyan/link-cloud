@@ -37,8 +37,8 @@ import { DataAcquisitionAuthenticationConfigFormComponent } from '../../data-acq
 @Component({
   selector: 'app-facility-view',
   standalone: true,
-  templateUrl: './facility-view.component.html',
-  styleUrls: ['./facility-view.component.scss'],
+  templateUrl: './facility-edit.component.html',
+  styleUrls: ['./facility-edit.component.scss'],
   imports: [
     CommonModule,
     MatToolbarModule,
@@ -61,7 +61,7 @@ import { DataAcquisitionAuthenticationConfigFormComponent } from '../../data-acq
     ReportDashboardComponent
   ]
 })
-export class FacilityViewComponent implements OnInit {
+export class FacilityEditComponent implements OnInit {
   @ViewChild(MatAccordion) accordion!: MatAccordion;
 
   facilityId: string = '';
