@@ -25,18 +25,16 @@ namespace LantanaGroup.Link.Tenant.Controllers
         private readonly IMapper _mapperDtoToModel;
 
         private readonly ILogger<FacilityController> _logger;
-
-        private readonly ISchedulerFactory _schedulerFactory;
-        public IScheduler _scheduler { get; set; }
+        
+        private readonly IScheduler _scheduler;
 
 
         public FacilityController(ILogger<FacilityController> logger, FacilityConfigurationService facilityConfigurationService, ISchedulerFactory schedulerFactory)
         {
 
             _facilityConfigurationService = facilityConfigurationService;
-            _schedulerFactory = schedulerFactory;
             _logger = logger;
-            _scheduler = _schedulerFactory.GetScheduler().Result;
+            _scheduler = schedulerFactory.GetScheduler().Result;
 
             var configModelToDto = new MapperConfiguration(cfg =>
             {
