@@ -7,7 +7,7 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.time.LocalDateTime;
+import java.util.Date;
 
 @Entity
 @Table(name = "category_rule")
@@ -23,8 +23,8 @@ public class CategoryRuleEntity {
     @JoinColumn(name = "category_id", nullable = false)
     private CategoryEntity category;
 
-    @Column(nullable = false, columnDefinition = "datetime2 DEFAULT SYSUTCDATETIME()")
-    private LocalDateTime timestamp;
+    @Column(nullable = false)
+    private Date timestamp = new Date();
 
     @Convert(converter = CategoryRuleConverter.class)
     @Column(nullable = false, columnDefinition = "nvarchar(max)")

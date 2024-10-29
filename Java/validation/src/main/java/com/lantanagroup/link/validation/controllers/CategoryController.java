@@ -6,6 +6,7 @@ import com.lantanagroup.link.validation.model.BulkSaveCategoryModel;
 import com.lantanagroup.link.validation.model.CategoryRuleModel;
 import com.lantanagroup.link.validation.repositories.CategoryRepository;
 import com.lantanagroup.link.validation.repositories.CategoryRuleRepository;
+import com.lantanagroup.link.validation.services.CategorizationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.transaction.Transactional;
@@ -27,10 +28,21 @@ public class CategoryController {
 
     private final CategoryRepository categoryRepository;
     private final CategoryRuleRepository categoryRuleRepository;
+    private final CategorizationService categorizationService;
 
-    public CategoryController(CategoryRepository categoryRepository, CategoryRuleRepository categoryRuleRepository) {
+    public CategoryController(
+            CategoryRepository categoryRepository,
+            CategoryRuleRepository categoryRuleRepository,
+            CategorizationService categorizationService) {
         this.categoryRepository = categoryRepository;
         this.categoryRuleRepository = categoryRuleRepository;
+        this.categorizationService = categorizationService;
+    }
+
+    @Operation(summary = "Initialize categories", tags = {"Categories"})
+    @PostMapping("/$init")
+    public void initCategories() {
+        this.categorizationService.initCategories();
     }
 
     @Operation(summary = "Create or update a category", tags = {"Categories"})
@@ -128,19 +140,8 @@ public class CategoryController {
         log.info("Bulk saving {} categories", categories.size());
 
         for (BulkSaveCategoryModel category : categories) {
-            CategoryEntity categoryEntity = new CategoryEntity();
-            categoryEntity.setId(category.getId());
-            categoryEntity.setTitle(category.getTitle());
-            categoryEntity.setSeverity(category.getSeverity());
-            categoryEntity.setAcceptable(category.isAcceptable());
-            categoryEntity.setGuidance(category.getGuidance());
-            this.categoryRepository.save(categoryEntity);
-
-            CategoryRuleModel rule = category.getRule();
-            CategoryRuleEntity categoryRuleEntity = new CategoryRuleEntity();
-            categoryRuleEntity.setCategory(categoryEntity);
-            categoryRuleEntity.setModel(rule);
-            this.categoryRuleRepository.save(categoryRuleEntity);
+            CategoryEntity categoryEntity = this.categoryRepository.save(category.toEntity());
+            this.categoryRuleRepository.save(category.toRuleEntity(categoryEntity));
         }
     }
 
