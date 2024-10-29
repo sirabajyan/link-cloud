@@ -29,4 +29,14 @@ public class CategoryEntity {
 
     @Column(nullable = false)
     private String guidance;
+
+    public static CategoryEntity uncategorized() {
+        CategoryEntity category = new CategoryEntity();
+        category.setId("uncategorized");
+        category.setTitle("Uncategorized");
+        category.setSeverity(CategorySeverity.WARNING);
+        category.setAcceptable(false);
+        category.setGuidance("These issues need to be categorized.");
+        return category;
+    }
 }
