@@ -1,16 +1,13 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { Observable, throwError } from 'rxjs';
+import { Observable} from 'rxjs';
 import { catchError, map, retry, tap } from 'rxjs/operators';
-import { PagedAuditModel } from '../../models/audit/paged-audit-model.model';
-import { environment } from '../../../environments/environment';
 import { IEntityCreatedResponse } from '../../interfaces/entity-created-response.model';
 import { ErrorHandlingService } from '../error-handling.service';
 import { IPatientEvent } from '../../interfaces/testing/patient-event.interface';
 import { IDataAcquisitionRequested, IScheduledReport } from '../../interfaces/testing/data-acquisition-requested.interface';
 import { IReportScheduled } from '../../interfaces/testing/report-scheduled.interface';
 import { AppConfigService } from '../app-config.service';
-import {ConsumerResponse} from "../../models/testing/ConsumerResponse";
 
 @Injectable({
   providedIn: 'root'
