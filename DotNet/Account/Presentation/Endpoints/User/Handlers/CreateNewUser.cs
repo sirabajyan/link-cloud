@@ -25,7 +25,7 @@ namespace LantanaGroup.Link.Account.Presentation.Endpoints.User.Handlers
 
                 if (existingUser is not null)
                 {
-                    return Results.Conflict("A user with the same email already exists.");
+                    return Results.Conflict("Invalid request.");
                 }
 
                 var requestor = context.User;
