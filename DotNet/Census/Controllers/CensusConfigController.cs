@@ -171,8 +171,27 @@ public class CensusConfigController : Controller
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Exception encountered in CensusConfigController.Delete");
-            return Problem(detail: ex.Message, statusCode: StatusCodes.Status500InternalServerError);
+            try
+            {
+                _logger.LogInformation(
+                    "Configuration deletion requested for facility {FacilityId}",
+                    facilityId
+                );
+                await _censusConfigManager.DeleteCensusConfigByFacilityId(facilityId);
+                _logger.LogInformation(
+                    "Configuration successfully deleted for facility {FacilityId}",
+                    facilityId
+                );
+                return Accepted();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Exception encountered in CensusConfigController.Delete");
+                return Problem(
+                    detail: "An error occurred while processing your request.",
+                    statusCode: StatusCodes.Status500InternalServerError
+                );
+            }
         }
     }
 }
