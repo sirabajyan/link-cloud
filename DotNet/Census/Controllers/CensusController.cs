@@ -98,7 +98,9 @@ public class CensusController : Controller
         catch (Exception ex)
         {
             _logger.LogError(ex, "Exception encountered in CensusController.GetAdmittedPatients");
-            return Problem(detail: ex.Message, statusCode: StatusCodes.Status500InternalServerError);
+            return Problem(
+                detail: "An error occurred while retrieving admitted patients.",
+                statusCode: StatusCodes.Status500InternalServerError);
         }
     }
 
