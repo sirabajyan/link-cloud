@@ -123,13 +123,11 @@ namespace LantanaGroup.Link.Tenant.Controllers
             }
             catch (ApplicationException ex)
             {
-                _logger.LogError($"Store facility exception: {ex.Message}");
-
                 return BadRequest(ex.Message);
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Exception is: {ex.Message}");
+                _logger.LogError(ex, "Store facility Exception");
 
                 throw;
             }
@@ -161,14 +159,13 @@ namespace LantanaGroup.Link.Tenant.Controllers
 
             using Activity? activity = ServiceActivitySource.Instance.StartActivity("Get Facility By Facility Id");
 
-            FacilityConfigModel facility = await _facilityConfigurationService.GetFacilityByFacilityId(facilityId, cancellationToken);
+            var facility = await _facilityConfigurationService.GetFacilityByFacilityId(facilityId, cancellationToken);
 
-            if (facility is null)
+            if (facility == null)
             {
-                _logger.LogError($"Facility with Id: {facilityId} Not Found");
-
                 return NotFound($"Facility with Id: {facilityId} Not Found");
             }
+
             FacilityConfigDto? dest = null;
 
             using (ServiceActivitySource.Instance.StartActivity("Map Result"))
@@ -203,24 +200,20 @@ namespace LantanaGroup.Link.Tenant.Controllers
             // validate id and updatedFacility.id match
             if (id.ToString() != updatedFacility.Id)
             {
-                _logger.LogError($" {id} in the url and the {updatedFacility.Id} in the payload mismatch");
-
                 return BadRequest($" {id} in the url and the {updatedFacility.Id} in the payload mismatch");
             }
+
             try
             {
-
                 await _facilityConfigurationService.UpdateFacility(id, dest, cancellationToken);
             }
             catch (ApplicationException ex)
             {
-                _logger.LogError($"Exception: {ex.Message}");
-
                 return BadRequest(ex.Message);
             }
             catch (Exception ex)
             {
-                _logger.LogError("Exception is: " + ex.Message);
+                _logger.LogError(ex, "Exception Encountered in FacilityController.UpdateFacility");
 
                 throw;
             }
@@ -262,7 +255,6 @@ namespace LantanaGroup.Link.Tenant.Controllers
         [HttpDelete("{facilityId}")]
         public async Task<IActionResult> DeleteFacility(string facilityId, CancellationToken cancellationToken)
         {
-
             _logger.LogInformation($"Delete Facility with Facility Id: {facilityId}");
 
             FacilityConfigModel existingFacility = _facilityConfigurationService.GetFacilityByFacilityId(facilityId, cancellationToken).Result;
@@ -273,9 +265,13 @@ namespace LantanaGroup.Link.Tenant.Controllers
             }
             catch (ApplicationException ex)
             {
-                _logger.LogError("Exception: " + ex.Message);
-
                 return BadRequest(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Exception Encountered in FacilityController.DeleteFacility");
+
+                throw;
             }
 
             using (ServiceActivitySource.Instance.StartActivity("Delete Jobs for Facility"))

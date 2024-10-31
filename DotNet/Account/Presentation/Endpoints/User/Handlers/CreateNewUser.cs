@@ -22,21 +22,9 @@ namespace LantanaGroup.Link.Account.Presentation.Endpoints.User.Handlers
 
                 //check if user with the same email exists
                 var existingUser = await queryUser.Execute(model.Email, context.RequestAborted);
+
                 if (existingUser is not null)
                 {
-                    var existingUriBuilder = new UriBuilder
-                    {
-                        Scheme = context.Request.Scheme,
-                        Host = context.Request.Host.Host,
-                        Path = $"api/account/user/{existingUser.Id}"
-                    };
-
-                    if (context.Request.Host.Port.HasValue)
-                    {
-                        existingUriBuilder.Port = context.Request.Host.Port.Value;
-                    }
-
-                    context.Response.Headers.Location = existingUriBuilder.ToString();
                     return Results.Conflict("A user with the same email already exists.");
                 }
 
