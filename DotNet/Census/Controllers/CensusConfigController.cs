@@ -60,7 +60,10 @@ public class CensusConfigController : Controller
         catch (Exception ex)
         {
             _logger.LogError(ex, "Exception encountered in CensusConfigController.Create");
-            return Problem(detail: ex.Message, statusCode: StatusCodes.Status500InternalServerError);
+            return Problem(
+                detail: "An error occurred while processing your request.",
+                statusCode: StatusCodes.Status500InternalServerError
+            );
         }
     }
 
