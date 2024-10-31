@@ -10,7 +10,7 @@ namespace LantanaGroup.Link.Account.Presentation.Endpoints.User.Handlers
 {
     public static class CreateNewUser
     {
-        public static async Task<IResult> Handle(HttpContext context, 
+        public static async Task<IResult> Handle(HttpContext context,
             LinkUserModel model, [FromServices] ILogger<UserEndpoints> logger, [FromServices] IGetUserByEmail queryUser, [FromServices] ICreateUser command)
         {
             try
@@ -25,7 +25,7 @@ namespace LantanaGroup.Link.Account.Presentation.Endpoints.User.Handlers
 
                 if (existingUser is not null)
                 {
-                    return Results.Conflict("A user with the same email already exists.");
+                    return Results.Conflict("Invalid request.");
                 }
 
                 var requestor = context.User;
@@ -54,7 +54,7 @@ namespace LantanaGroup.Link.Account.Presentation.Endpoints.User.Handlers
                 Activity.Current?.RecordException(ex);
                 logger.LogUserCreationException(ex.Message);
                 throw;
-            }            
-        }        
+            }
+        }
     }
 }

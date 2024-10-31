@@ -127,9 +127,8 @@ namespace LantanaGroup.Link.Tenant.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Store facility Exception");
-
-                throw;
+                _logger.LogError(ex, "Exception Encountered in FacilityController.StoreFacility");
+                return Problem("An error occurred while storing the facility", null, 500);
             }
 
             // create jobs for the new Facility
@@ -214,8 +213,7 @@ namespace LantanaGroup.Link.Tenant.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Exception Encountered in FacilityController.UpdateFacility");
-
-                throw;
+                return Problem("An error occurred while updating the facility", null, 500);
             }
 
             var scheduler = await _schedulerFactory.GetScheduler(cancellationToken);
@@ -270,8 +268,7 @@ namespace LantanaGroup.Link.Tenant.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Exception Encountered in FacilityController.DeleteFacility");
-
-                throw;
+                return Problem("An error occurred while deleting the facility", null, 500);
             }
 
             using (ServiceActivitySource.Instance.StartActivity("Delete Jobs for Facility"))

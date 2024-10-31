@@ -15,7 +15,7 @@ public class CensusConfigController : Controller
 {
     private readonly ILogger<CensusConfigController> _logger;
     private readonly ICensusConfigManager _censusConfigManager;
-    
+
     public CensusConfigController(ILogger<CensusConfigController> logger, ICensusConfigManager censusConfigManager)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -91,7 +91,10 @@ public class CensusConfigController : Controller
         catch (Exception ex)
         {
             _logger.LogError(ex, "Exception encountered in CensusConfigController.Get");
-            return Problem(detail: ex.Message, statusCode: StatusCodes.Status500InternalServerError);
+            return Problem(
+                detail: "An error occurred while processing your request.",
+                statusCode: StatusCodes.Status500InternalServerError
+            );
         }
     }
 
@@ -149,7 +152,10 @@ public class CensusConfigController : Controller
         catch (Exception ex)
         {
             _logger.LogError(ex, "Exception encountered in CensusConfigController.Put");
-            return Problem(detail: ex.Message, statusCode: StatusCodes.Status500InternalServerError);
+            return Problem(
+                detail: "An error occurred while processing your request.",
+                statusCode: StatusCodes.Status500InternalServerError
+            );
         }
     }
 
@@ -174,27 +180,11 @@ public class CensusConfigController : Controller
         }
         catch (Exception ex)
         {
-            try
-            {
-                _logger.LogInformation(
-                    "Configuration deletion requested for facility {FacilityId}",
-                    facilityId
-                );
-                await _censusConfigManager.DeleteCensusConfigByFacilityId(facilityId);
-                _logger.LogInformation(
-                    "Configuration successfully deleted for facility {FacilityId}",
-                    facilityId
-                );
-                return Accepted();
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Exception encountered in CensusConfigController.Delete");
-                return Problem(
-                    detail: "An error occurred while processing your request.",
-                    statusCode: StatusCodes.Status500InternalServerError
-                );
-            }
+            _logger.LogError(ex, "Exception encountered in CensusConfigController.Delete");
+            return Problem(
+                detail: "An error occurred while processing your request.",
+                statusCode: StatusCodes.Status500InternalServerError
+            );
         }
     }
 }
