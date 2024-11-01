@@ -93,8 +93,6 @@ namespace LantanaGroup.Link.Tenant.Controllers
             }
             if (pagedFacilityConfigModelDto.Records.Count == 0)
             {
-                _logger.LogError("No Facilities Found");
-
                 return NoContent();
             }
             return Ok(pagedFacilityConfigModelDto);
