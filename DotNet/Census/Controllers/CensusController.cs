@@ -44,7 +44,7 @@ public class CensusController : Controller
         catch (Exception ex)
         {
             _logger.LogError(ex, "Exception encountered in CensusController.GetCensusHistory");
-            return Problem(detail: ex.Message, statusCode: StatusCodes.Status500InternalServerError);
+            return Problem(detail: "An error occurred while retrieving census history.", statusCode: StatusCodes.Status500InternalServerError);
         }
     }
 
@@ -98,7 +98,7 @@ public class CensusController : Controller
         catch (Exception ex)
         {
             _logger.LogError(ex, "Exception encountered in CensusController.GetAdmittedPatients");
-            return Problem(detail: ex.Message, statusCode: StatusCodes.Status500InternalServerError);
+            return Problem(detail: "An error occurred while retrieving facility admitted patients.", statusCode: StatusCodes.Status500InternalServerError);
         }
     }
 
@@ -129,7 +129,7 @@ public class CensusController : Controller
         catch (Exception ex)
         {
             _logger.LogError(ex, "Exception encountered in CensusController.GetCurrentCensus");
-            return Problem(detail: ex.Message, statusCode: StatusCodes.Status500InternalServerError);
+            return Problem(detail: "An error occurred while retrieving current census.", statusCode: StatusCodes.Status500InternalServerError);
         }
     }
 
@@ -155,7 +155,7 @@ public class CensusController : Controller
         catch (Exception ex)
         {
             _logger.LogError(ex, "Exception encountered in CensusController.GetAllPatientsForFacility");
-            return Problem(detail: ex.Message, statusCode: StatusCodes.Status500InternalServerError);
+            return Problem(detail: "An error occurred while retrieving all the facility patients.", statusCode: StatusCodes.Status500InternalServerError);
         }
     }
 }

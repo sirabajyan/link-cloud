@@ -65,7 +65,7 @@ namespace LantanaGroup.Link.Normalization.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Exception encountered in NormalizationController.StoreTenant");
-                return Problem(detail: ex.Message, statusCode: StatusCodes.Status500InternalServerError);
+                return Problem(detail: "An error occurred while updating the configuration.", statusCode: StatusCodes.Status500InternalServerError );
             }
 
             //await CreateAuditEvent(configModel, AuditEventType.Create);
@@ -99,7 +99,7 @@ namespace LantanaGroup.Link.Normalization.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Exception encountered in NormalizationController.GetConfig");
-                return Problem(detail: ex.Message, statusCode: StatusCodes.Status500InternalServerError);
+                return Problem(detail: "An error occurred while retrieving the configuration.", statusCode: StatusCodes.Status500InternalServerError);
             }
 
             return Ok(config);
