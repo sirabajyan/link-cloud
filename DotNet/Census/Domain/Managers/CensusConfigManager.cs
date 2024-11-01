@@ -75,9 +75,7 @@ public class CensusConfigManager : ICensusConfigManager
             }
             catch (Exception ex)
             {
-                var message =
-                    $"Error re-scheduling job for facility {existingEntity.FacilityID} {ex.Message}\n{ex.InnerException}\n{ex.Source}\n{ex.StackTrace}";
-                _logger.LogError(message, ex);
+                _logger.LogError(ex, "Exception in CensusConfigManager.AddOrUpdateCensusConfig");
                 throw;
             }
 
