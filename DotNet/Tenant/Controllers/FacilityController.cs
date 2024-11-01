@@ -91,12 +91,12 @@ namespace LantanaGroup.Link.Tenant.Controllers
                 pagedFacilityConfigModelDto.Records = facilitiesDtos;
                 pagedFacilityConfigModelDto.Metadata = pagedFacilityConfigModel.Metadata;
             }
+
             if (pagedFacilityConfigModelDto.Records.Count == 0)
             {
-                _logger.LogError("No Facilities Found");
-
                 return NoContent();
             }
+
             return Ok(pagedFacilityConfigModelDto);
         }
 
@@ -112,8 +112,6 @@ namespace LantanaGroup.Link.Tenant.Controllers
         [HttpPost]
         public async Task<IActionResult> StoreFacility(FacilityConfigDto newFacility, CancellationToken cancellationToken)
         {
-            _logger.LogInformation($"Store Facility with Id: {newFacility.Id} and Facility Name: {newFacility.FacilityName}");
-
             FacilityConfigModel facilityConfigModel = _mapperDtoToModel.Map<FacilityConfigDto, FacilityConfigModel>(newFacility);
 
             try
@@ -154,8 +152,6 @@ namespace LantanaGroup.Link.Tenant.Controllers
         [HttpGet("{facilityId}")]
         public async Task<ActionResult<FacilityConfigDto>> LookupFacilityById(string facilityId, CancellationToken cancellationToken)
         {
-            _logger.LogInformation($"Get Facility with Facility Id: {facilityId} ");
-
             using Activity? activity = ServiceActivitySource.Instance.StartActivity("Get Facility By Facility Id");
 
             var facility = await _facilityConfigurationService.GetFacilityByFacilityId(facilityId, cancellationToken);
@@ -190,8 +186,6 @@ namespace LantanaGroup.Link.Tenant.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateFacility(string id, FacilityConfigDto updatedFacility, CancellationToken cancellationToken)
         {
-            _logger.LogInformation($"Update Facility with Id: {updatedFacility.Id} and Facility Name: {updatedFacility.FacilityName}");
-
             FacilityConfigModel dest = _mapperDtoToModel.Map<FacilityConfigDto, FacilityConfigModel>(updatedFacility);
 
             FacilityConfigModel existingFacility = await _facilityConfigurationService.GetFacilityById(id, cancellationToken);
@@ -253,8 +247,6 @@ namespace LantanaGroup.Link.Tenant.Controllers
         [HttpDelete("{facilityId}")]
         public async Task<IActionResult> DeleteFacility(string facilityId, CancellationToken cancellationToken)
         {
-            _logger.LogInformation($"Delete Facility with Facility Id: {facilityId}");
-
             FacilityConfigModel existingFacility = _facilityConfigurationService.GetFacilityByFacilityId(facilityId, cancellationToken).Result;
 
             try
