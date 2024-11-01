@@ -1,10 +1,8 @@
-﻿using Confluent.Kafka;
-using LantanaGroup.Link.Normalization.Application.Managers;
+﻿using LantanaGroup.Link.Normalization.Application.Managers;
 using LantanaGroup.Link.Normalization.Application.Models;
 using LantanaGroup.Link.Normalization.Application.Models.Exceptions;
 using LantanaGroup.Link.Normalization.Domain.Entities;
 using LantanaGroup.Link.Shared.Application.Interfaces;
-using LantanaGroup.Link.Shared.Application.Models;
 using Link.Authorization.Policies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -58,18 +56,19 @@ namespace LantanaGroup.Link.Normalization.Controllers
             }
             catch (ConfigOperationNullException ex) 
             {
-                _logger.LogError(ex.Message, ex);
                 return BadRequest(ex.Message);
             }
             catch(EntityAlreadyExistsException ex) 
             {
-                _logger.LogError(ex.Message, ex);
                 return BadRequest($"Entity for {config?.FacilityId} already exists. Please use PUT request to update.");
             }
             catch(Exception ex) 
             {
-                _logger.LogError(ex.Message, ex);
-                return StatusCode(StatusCodes.Status500InternalServerError);
+                _logger.LogError(ex, "Exception encountered in NormalizationController.StoreTenant");
+                return Problem(
+                    detail: "An error occurred while processing your request.",
+                    statusCode: StatusCodes.Status500InternalServerError
+                );
             }
 
             //await CreateAuditEvent(configModel, AuditEventType.Create);
@@ -98,13 +97,12 @@ namespace LantanaGroup.Link.Normalization.Controllers
             }
             catch(NoEntityFoundException ex)
             {
-                _logger.LogError(ex.Message, ex);
                 return NotFound();
             }
             catch(Exception ex)
             {
-                var message = $"Internal Error for GET facility {facilityId}.";
-                _logger.LogError(message, ex);
+                _logger.LogError(ex, "Exception encountered in NormalizationController.GetConfig");
+                return Problem(detail: ex.Message, statusCode: StatusCodes.Status500InternalServerError);
             }
             
             return Ok(config);
@@ -148,17 +146,15 @@ namespace LantanaGroup.Link.Normalization.Controllers
             }
             catch (ConfigOperationNullException ex)
             {
-                _logger.LogError(ex.Message, ex);
                 return BadRequest(ex.Message);
             }
             catch (EntityAlreadyExistsException ex)
             {
-                _logger.LogError(ex.Message, ex);
                 return BadRequest($"Entity for {config?.FacilityId} already exists. Please use PUT request to update.");
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex.Message, ex);
+                _logger.LogError(ex, "Exception encountered in NormalizationController.UpdateTenantNormalization");
                 return Problem(detail: ex.Message, statusCode: StatusCodes.Status500InternalServerError);
             }
 
@@ -188,55 +184,19 @@ namespace LantanaGroup.Link.Normalization.Controllers
             }
             catch (ConfigOperationNullException ex)
             {
-                _logger.LogError(ex.Message, ex);
                 return BadRequest(ex.Message);
             }
             catch (NoEntityFoundException ex)
             {
-                _logger.LogError(ex.Message, ex);
                 return NotFound(ex.Message);
             }
             catch(Exception ex)
             {
-                _logger.LogError(ex.Message, ex);
+                _logger.LogError(ex, "Exception encountered in NormalizationController.DeleteTenantNormalization");
                 return Problem(detail: ex.Message, statusCode: StatusCodes.Status500InternalServerError);
             }
 
             return Accepted();
-        }
-
-        [ApiExplorerSettings(IgnoreApi = true)]
-        public async Task<string> CreateAuditEvent(NormalizationConfigModel model, AuditEventType type)
-        {
-            try
-            {
-                using var producer = _kafkaProducerFactory.CreateAuditEventProducer();
-                Shared.Application.Models.Kafka.AuditEventMessage auditEvent = new Shared.Application.Models.Kafka.AuditEventMessage();
-                auditEvent.ServiceName = "Normalization Service";
-                auditEvent.EventDate = DateTime.UtcNow;
-                //auditEvent.UserId =
-                auditEvent.User = "SystemUser";
-                auditEvent.Action = type;
-                auditEvent.Resource = nameof(NormalizationConfig);
-                auditEvent.Notes = $"{type} for normalization configuration ({model.FacilityId})'.";
-
-                var headers = new Headers();
-                headers.Add("X-Correlation-Id", (Guid.NewGuid().ToByteArray()));
-
-                //write to auditable event occurred topic
-                await producer.ProduceAsync(KafkaTopic.AuditableEventOccurred.ToString(), new Message<string,Shared.Application.Models.Kafka.AuditEventMessage>
-                {
-                    Key = model.FacilityId,
-                    Value = auditEvent,
-                    Headers = headers
-                });
-
-                return model.FacilityId;
-            }
-            catch (Exception ex)
-            {
-                throw new ApplicationException($"Failed to create audit event for {type} normalization configuration for tenant {model.FacilityId}.", ex);
-            }
         }
     }
 }
