@@ -152,7 +152,7 @@ namespace LantanaGroup.Link.Normalization.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Exception encountered in NormalizationController.UpdateTenantNormalization");
-                return Problem(detail: ex.Message, statusCode: StatusCodes.Status500InternalServerError);
+                return Problem(detail: "An error occurred while updating the configuration.", statusCode: StatusCodes.Status500InternalServerError);
             }
 
             return Accepted();
@@ -190,7 +190,7 @@ namespace LantanaGroup.Link.Normalization.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Exception encountered in NormalizationController.DeleteTenantNormalization");
-                return Problem(detail: ex.Message, statusCode: StatusCodes.Status500InternalServerError);
+                return Problem(detail: "An error occurred while deleting the configuration.", statusCode: StatusCodes.Status500InternalServerError);
             }
 
             return Accepted();
