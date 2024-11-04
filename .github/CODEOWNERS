@@ -1,6 +1,6 @@
 # Stephen is interested in changes to each microservice's version numbers so will be added to code reviews where they may have been modified
-**/appsettings.json @sdmcgeown @MaxJustice1
-**/pom.xml @sdmcgeown @MaxJustice1
+**/appsettings.json @sdmcgeown
+**/pom.xml @sdmcgeown
 
 # The following is pasted from https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners and may be useful for extending different patterns to different reviews in our repo
 
