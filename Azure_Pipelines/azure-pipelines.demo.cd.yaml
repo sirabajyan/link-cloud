@@ -2,7 +2,6 @@ trigger:
   branches:
     include:
     - dev
-    - release/*
   paths:
     include:
     - Web/DemoApp/*
@@ -65,7 +64,7 @@ steps:
       Dockerfile: $(dockerPath)
       tags: |
         latest
-        $(Build.BuildId)_$(Build.SourceBranchName)
+        $(Build.BuildId)
       buildContext: '$(workingDir)'
 
   - task: PublishPipelineArtifact@1

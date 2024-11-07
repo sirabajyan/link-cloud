@@ -264,6 +264,7 @@ services:
         kafka-topics --bootstrap-server kafka_b:9094 --command-config /etc/kafka-client.properties --create --if-not-exists --topic AuditableEventOccurred --replication-factor 1 --partitions 1
         kafka-topics --bootstrap-server kafka_b:9094 --command-config /etc/kafka-client.properties --create --if-not-exists --topic AuditableEventOccurred-Error --replication-factor 1 --partitions 1
         kafka-topics --bootstrap-server kafka_b:9094 --command-config /etc/kafka-client.properties --create --if-not-exists --topic AuditableEventOccurred-Retry --replication-factor 1 --partitions 1
+        kafka-topics --bootstrap-server kafka_b:9094 --command-config /etc/kafka-client.properties --create --if-not-exists --topic Service-Healthcheck --replication-factor 1 --partitions 1 --config retention.ms=1
       "
       
   kafka-ui:
@@ -406,7 +407,7 @@ services:
       EnableIntegrationFeature: true
       ProblemDetails__IncludeExceptionDetails: false
       LinkTokenService__EnableTokenGenerationEndpoint: false
-      LinkTokenService__Authority: placeholder      
+      LinkTokenService__Authority: placeholder
       LinkTokenService__LinkAdminEmail:      
       LinkTokenService__TokenLifeSpan: 10    
       Authentication__EnableAnonymousAccess: true
@@ -822,7 +823,6 @@ services:
       Telemetry__OtelCollectorEndpoint: http://otel-collector:4317
       EnableSwagger: true
       Authentication__EnableAnonymousAccess: true
-      LinkTokenService__EnableTokenGenerationEndpoint: false
       ServiceRegistry__MeasureServiceUrl: http://measureeval:8067
     ports:
       - "8074:8074"

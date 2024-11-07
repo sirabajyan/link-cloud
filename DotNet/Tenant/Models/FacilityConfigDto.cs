@@ -1,12 +1,17 @@
 ﻿namespace LantanaGroup.Link.Tenant.Models
+using System.Runtime.Serialization;
+
 {
+    [DataContract]
     public class FacilityConfigDto
     {
+        [DataMember]
         public string? Id { get; set; }
-        public string FacilityId { get; set; } = null!;
+        public string? FacilityId { get; set; }
+        [DataMember]
         public string? FacilityName { get; set; }
         public string TimeZone { get; set; }
         public ScheduledReportDto ScheduledReports { get; set; } = null!;
-    
+
     }
 }

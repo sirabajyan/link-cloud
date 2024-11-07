@@ -1,5 +1,6 @@
 using LantanaGroup.Link.Report.Core;
 using LantanaGroup.Link.Report.Entities;
+using LantanaGroup.Link.Shared.Application.Services.Security;
 using Link.Authorization.Policies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -64,11 +65,11 @@ namespace LantanaGroup.Link.Report.Controllers
                 }
 
                 return NotFound();
-                
+
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"Error in ReportController.GetSubmissionBundleForPatient for PatientId {patientId}: {ex.Message}");
+                _logger.LogError(ex, "Exception in ReportController.GetSubmissionBundleForPatient for facility '{FacilityId}' and patient '{PatientId}'",HtmlInputSanitizer.SanitizeAndRemove(facilityId), HtmlInputSanitizer.Sanitize(patientId));
                 return Problem(ex.Message, statusCode: 500);
             }
         }

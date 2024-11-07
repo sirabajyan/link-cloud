@@ -2,7 +2,6 @@ trigger:
   branches:
     include:
     - dev
-    - release/*
   paths:
     include:
     - Java/measureeval/*
@@ -50,7 +49,7 @@ steps:
       Dockerfile: $(dockerPath)
       tags: |
         latest
-        $(Build.BuildId)_$(Build.SourceBranchName)
+        $(Build.BuildId)
       buildContext: 'Java/'
 
   - task: PublishPipelineArtifact@1

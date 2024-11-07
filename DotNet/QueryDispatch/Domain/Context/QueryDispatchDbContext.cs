@@ -55,20 +55,20 @@ public class QueryDispatchDbContext : DbContext
     }
 
     //--------------------IMPORTANT--------------------
-    //Uncomment the class QueryDispatchDbContextFactory to create or apply migrations.Ensure that you enter the correct connection string in the UseSqlServer method.
+    //Uncomment the class QueryDispatchDbContextFactory to create or apply migrations. Ensure that you enter the correct connection string in the UseSqlServer method.
     //When finished, delete the connection string and comment out the class QueryDispatchDbContextFactory.
     //commands:
-    //dotnet ef migrations add<NAME OF MIGRATION>
+    //dotnet ef migrations add <NAME OF MIGRATION>
     //dotnet ef database update
 
-    //public class QueryDispatchDbContextFactory : IDesignTimeDbContextFactory<QueryDispatchDbContext>
-    //{
-    //    public QueryDispatchDbContext CreateDbContext(string[] args)
-    //    {
-    //        var optionsBuilder = new DbContextOptionsBuilder<QueryDispatchDbContext>();
-    //        optionsBuilder.UseSqlServer("");
+    public class QueryDispatchDbContextFactory : IDesignTimeDbContextFactory<QueryDispatchDbContext>
+    {
+        public QueryDispatchDbContext CreateDbContext(string[] args)
+        {
+            var optionsBuilder = new DbContextOptionsBuilder<QueryDispatchDbContext>();
+            optionsBuilder.UseSqlServer("");
 
-    //        return new QueryDispatchDbContext(optionsBuilder.Options);
-    //    }
-    //}
+            return new QueryDispatchDbContext(optionsBuilder.Options);
+        }
+    }
 }

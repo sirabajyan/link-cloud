@@ -30,6 +30,7 @@ using LantanaGroup.Link.Shared.Application.Models;
 using LantanaGroup.Link.Shared.Application.Middleware;
 using LantanaGroup.Link.Shared.Application.Factories;
 using Confluent.Kafka;
+using LantanaGroup.Link.Shared.Application.Health;
 
 namespace Tenant
 {
@@ -184,8 +185,11 @@ namespace Tenant
 
 
             //Add health checks
+            var kafkaHealthOptions = new KafkaHealthCheckConfiguration(kafkaConnection, TenantConstants.ServiceName).GetHealthCheckOptions();
+
             builder.Services.AddHealthChecks()
-                .AddCheck<DatabaseHealthCheck>("Database");
+                .AddCheck<DatabaseHealthCheck>("Database")
+                .AddKafka(kafkaHealthOptions);
 
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();

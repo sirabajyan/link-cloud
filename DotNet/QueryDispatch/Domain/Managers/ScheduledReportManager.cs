@@ -4,6 +4,7 @@ using LantanaGroup.Link.QueryDispatch.Domain.Entities;
 using LantanaGroup.Link.Shared.Application.Models;
 using LantanaGroup.Link.Shared.Application.Models.Kafka;
 using LantanaGroup.Link.Shared.Application.Repositories.Interfaces;
+using LantanaGroup.Link.Shared.Application.Services.Security;
 using Quartz;
 using QueryDispatch.Application.Settings;
 
@@ -43,7 +44,7 @@ namespace QueryDispatch.Domain.Managers
             {
                 await _scheduledReportRepository.AddAsync(scheduledReport);
 
-                _logger.LogInformation($"Created schedule report for faciltiy {scheduledReport.FacilityId}");
+                _logger.LogInformation($"Created schedule report for faciltiy {HtmlInputSanitizer.Sanitize(scheduledReport.FacilityId)}");
 
                 var headers = new Headers
                         {
@@ -74,8 +75,8 @@ namespace QueryDispatch.Domain.Managers
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Failed to create scheduled report for facility {scheduledReport.FacilityId}.", ex);
-                throw new ApplicationException($"Failed to create scheduled report for facility {scheduledReport.FacilityId}.");
+                _logger.LogError($"Failed to create scheduled report for facility {HtmlInputSanitizer.Sanitize(scheduledReport.FacilityId)}.", ex);
+                throw new ApplicationException($"Failed to create scheduled report for facility {HtmlInputSanitizer.Sanitize(scheduledReport.FacilityId)}.");
             }
         }
 
@@ -126,7 +127,7 @@ namespace QueryDispatch.Domain.Managers
 
                 await _scheduledReportRepository.UpdateAsync(existingReport);
 
-                _logger.LogInformation($"Update scheduled report type {newReportPeriod.ReportTypes} for facility id {existingReport.FacilityId}");
+                _logger.LogInformation($"Update scheduled report type {HtmlInputSanitizer.Sanitize(newReportPeriod.ReportType)} for facility id {HtmlInputSanitizer.Sanitize(existingReport.FacilityId)}");
 
                 var headers = new Headers
                     {
@@ -156,8 +157,8 @@ namespace QueryDispatch.Domain.Managers
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Failed to update scheduled report for facility id {existingReport.FacilityId}.", ex);
-                throw new ApplicationException($"Failed to update scheduled report for facility id {existingReport.FacilityId}.");
+                _logger.LogError($"Failed to update scheduled report for facility id {HtmlInputSanitizer.Sanitize(existingReport.FacilityId)}.", ex);
+                throw new ApplicationException($"Failed to update scheduled report for facility id {HtmlInputSanitizer.Sanitize(existingReport.FacilityId)}.");
             }
         }
     }
