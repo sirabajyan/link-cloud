@@ -1,0 +1,19 @@
+spring:
+  jpa:
+    properties:
+      hibernate:
+        format_sql: true
+        hbm2ddl:
+          schema-generation:
+            script:
+              append: false
+
+      jakarta:
+        persistence:
+          schema-generation:
+            database:
+              action: update
+            scripts:
+              action: create
+              create-source: metadata
+              create-target: ./validation/src/main/resources/database/reference/schema.sql
