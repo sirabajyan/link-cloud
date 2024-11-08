@@ -1,6 +1,7 @@
 package com.lantanagroup.link.validation.entities;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.lantanagroup.link.validation.model.ArtifactType;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -14,16 +15,11 @@ public class ArtifactEntity {
     private Long id;
 
     @Enumerated(EnumType.STRING)
-    private Types type;
+    private ArtifactType type;
 
     private String name;
 
     @Lob
     @Column(columnDefinition = "VARBINARY(MAX)")
     private byte[] content;
-
-    public enum Types {
-        PACKAGE,
-        RESOURCE
-    }
 }

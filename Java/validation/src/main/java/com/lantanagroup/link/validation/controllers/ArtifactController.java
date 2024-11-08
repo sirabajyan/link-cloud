@@ -1,6 +1,7 @@
 package com.lantanagroup.link.validation.controllers;
 
 import com.lantanagroup.link.validation.entities.ArtifactEntity;
+import com.lantanagroup.link.validation.model.ArtifactType;
 import com.lantanagroup.link.validation.services.ArtifactService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -36,7 +37,7 @@ public class ArtifactController {
             operationId = "createOrUpdateArtifact"
     )
     @PutMapping("/{type}")
-    public void createOrUpdateArtifact(@PathVariable("type") ArtifactEntity.Types type, @RequestParam String name, @RequestBody byte[] content) {
+    public void createOrUpdateArtifact(@PathVariable("type") ArtifactType type, @RequestParam String name, @RequestBody byte[] content) {
         this.artifactService.createOrUpdateArtifact(name, type, content);
     }
 
@@ -47,7 +48,7 @@ public class ArtifactController {
             operationId = "deleteArtifact"
     )
     @DeleteMapping("/{type}/{name}")
-    public void deleteArtifact(@PathVariable("type") ArtifactEntity.Types type, @PathVariable("name") String name) {
+    public void deleteArtifact(@PathVariable("type") ArtifactType type, @PathVariable("name") String name) {
         this.artifactService.deleteArtifact(type, name);
     }
 

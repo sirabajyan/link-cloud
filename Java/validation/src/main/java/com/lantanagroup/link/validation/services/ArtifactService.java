@@ -7,6 +7,7 @@ import ca.uhn.fhir.parser.IParser;
 import ca.uhn.fhir.parser.LenientErrorHandler;
 import com.lantanagroup.link.validation.config.ArtifactConfig;
 import com.lantanagroup.link.validation.entities.ArtifactEntity;
+import com.lantanagroup.link.validation.model.ArtifactType;
 import com.lantanagroup.link.validation.repositories.ArtifactRepository;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -49,7 +50,7 @@ public class ArtifactService {
         }
     }
 
-    public void createOrUpdateArtifact(String name, ArtifactEntity.Types type, byte[] content) {
+    public void createOrUpdateArtifact(String name, ArtifactType type, byte[] content) {
         List<ArtifactEntity> artifactEntities = this.repository.findByTypeAndName(type, name);
 
         if (artifactEntities.size() > 1) {
@@ -69,7 +70,7 @@ public class ArtifactService {
         }
     }
 
-    public void deleteArtifact(ArtifactEntity.Types type, String name) {
+    public void deleteArtifact(ArtifactType type, String name) {
         List<ArtifactEntity> artifactEntities = this.repository.findByTypeAndName(type, name);
         if (artifactEntities.size() > 1) {
             throw new RuntimeException("Multiple artifacts found with the same name");
@@ -93,13 +94,13 @@ public class ArtifactService {
     }
 
     public void initArtifacts() {
-        this.initArtifacts(ArtifactEntity.Types.PACKAGE);
-        this.initArtifacts(ArtifactEntity.Types.RESOURCE);
+        this.initArtifacts(ArtifactType.PACKAGE);
+        this.initArtifacts(ArtifactType.RESOURCE);
     }
 
-    private void initArtifacts(ArtifactEntity.Types type) {
-        List<String> extensions = type == ArtifactEntity.Types.RESOURCE ? List.of("json", "xml") : List.of("tgz");
-        String path = type == ArtifactEntity.Types.RESOURCE ? "classpath:/resources/**" : "classpath:/packages/**";
+    private void initArtifacts(ArtifactType type) {
+        List<String> extensions = type == ArtifactType.RESOURCE ? List.of("json", "xml") : List.of("tgz");
+        String path = type == ArtifactType.RESOURCE ? "classpath:/resources/**" : "classpath:/packages/**";
         PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
         org.springframework.core.io.Resource[] resources;
 
@@ -165,7 +166,7 @@ public class ArtifactService {
     }
 
     private synchronized void loadPackage(ArtifactEntity artifactEntity) {
-        if (artifactEntity.getType() != ArtifactEntity.Types.PACKAGE) {
+        if (artifactEntity.getType() != ArtifactType.PACKAGE) {
             throw new RuntimeException("Artifact is not an NPM package");
         }
 
@@ -189,7 +190,7 @@ public class ArtifactService {
     }
 
     private synchronized void loadResource(ArtifactEntity artifactEntity) {
-        if (artifactEntity.getType() != ArtifactEntity.Types.RESOURCE) {
+        if (artifactEntity.getType() != ArtifactType.RESOURCE) {
             throw new RuntimeException("Artifact is not a resource");
         }
 
