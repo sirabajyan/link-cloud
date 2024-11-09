@@ -1,1 +1,1 @@
-schema.sql text eol=crlf
+*.sql text eol=crlf

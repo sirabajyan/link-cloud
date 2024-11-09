@@ -2,6 +2,7 @@ spring:
   jpa:
     properties:
       hibernate:
+        show_sql: true
         format_sql: true
         hbm2ddl:
           schema-generation:
@@ -14,6 +15,8 @@ spring:
             database:
               action: update
             scripts:
-              action: create
+              action: create-drop
               create-source: metadata
-              create-target: ./validation/src/main/resources/database/reference/schema.sql
+              create-target: ./validation/src/main/resources/database/reference/create.sql
+              drop-source: metadata
+              drop-target: ./validation/src/main/resources/database/reference/drop.sql
