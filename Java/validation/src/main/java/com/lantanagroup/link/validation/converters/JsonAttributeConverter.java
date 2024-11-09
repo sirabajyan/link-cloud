@@ -2,18 +2,17 @@ package com.lantanagroup.link.validation.converters;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.lantanagroup.link.validation.model.CategoryRuleModel;
 import jakarta.persistence.AttributeConverter;
-import jakarta.persistence.Converter;
 
 import java.io.UncheckedIOException;
 
-@Converter
-public class CategoryRuleConverter implements AttributeConverter<CategoryRuleModel, String> {
+public abstract class JsonAttributeConverter<T> implements AttributeConverter<T, String> {
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
+    protected abstract Class<T> getAttributeClass();
+
     @Override
-    public String convertToDatabaseColumn(CategoryRuleModel model) {
+    public String convertToDatabaseColumn(T model) {
         try {
             return objectMapper.writeValueAsString(model);
         } catch (JsonProcessingException e) {
@@ -22,9 +21,9 @@ public class CategoryRuleConverter implements AttributeConverter<CategoryRuleMod
     }
 
     @Override
-    public CategoryRuleModel convertToEntityAttribute(String json) {
+    public T convertToEntityAttribute(String json) {
         try {
-            return objectMapper.readValue(json, CategoryRuleModel.class);
+            return objectMapper.readValue(json, getAttributeClass());
         } catch (JsonProcessingException e) {
             throw new UncheckedIOException(e);
         }

@@ -1,7 +1,7 @@
 package com.lantanagroup.link.validation.entities;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.lantanagroup.link.validation.converters.CategoryRuleConverter;
+import com.lantanagroup.link.validation.converters.CategoryRuleModelConverter;
 import com.lantanagroup.link.validation.model.CategoryRuleModel;
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -26,7 +26,7 @@ public class CategoryRuleEntity {
     @Column(nullable = false)
     private Date timestamp = new Date();
 
-    @Convert(converter = CategoryRuleConverter.class)
+    @Convert(converter = CategoryRuleModelConverter.class)
     @Column(nullable = false, columnDefinition = "nvarchar(max)")
     private CategoryRuleModel model;
 }
