@@ -6,20 +6,24 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
-@Entity(name = "artifact")
-@Getter @Setter
+@Getter
+@Setter
+@Entity
+@Table(name = "artifact")
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class ArtifactEntity {
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     private ArtifactType type;
 
+    @Column(nullable = false)
     private String name;
 
     @Lob
-    @Column(columnDefinition = "VARBINARY(MAX)")
+    @Column(columnDefinition = "varbinary(max)", nullable = false)
     private byte[] content;
 }

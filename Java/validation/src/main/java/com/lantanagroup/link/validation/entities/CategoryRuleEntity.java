@@ -7,26 +7,26 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.util.Date;
+import java.time.OffsetDateTime;
 
+@Getter
+@Setter
 @Entity
 @Table(name = "category_rule")
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@Getter
-@Setter
 public class CategoryRuleEntity {
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "category_id", nullable = false)
+    @JoinColumn(name = "category_id", nullable = false, foreignKey = @ForeignKey(name = "fk_category_rule_category_id"))
     private CategoryEntity category;
 
     @Column(nullable = false)
-    private Date timestamp = new Date();
+    private OffsetDateTime timestamp = OffsetDateTime.now();
 
     @Convert(converter = CategoryRuleModelConverter.class)
-    @Column(nullable = false, columnDefinition = "nvarchar(max)")
+    @Column(columnDefinition = "varchar(max)", nullable = false)
     private CategoryRuleModel model;
 }

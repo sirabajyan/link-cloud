@@ -2,23 +2,19 @@ package com.lantanagroup.link.validation.entities;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.lantanagroup.link.validation.model.ResultModel;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hl7.fhir.r4.model.OperationOutcome;
 
-@Entity(name = "result")
 @Getter
 @Setter
-@NoArgsConstructor
+@Entity
+@Table(name = "result")
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class ResultEntity extends ResultModel {
+public class ResultEntity {
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(nullable = false)
@@ -27,34 +23,40 @@ public class ResultEntity extends ResultModel {
     @Column(nullable = false)
     private String reportId;
 
-    @Column(nullable = false, columnDefinition = "varchar(max)")
-    private String message;
-
-    @Column(nullable = false, length = 4096)
-    private String expression;
-
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private OperationOutcome.IssueSeverity severity;
 
-    private OperationOutcome.IssueType type;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private OperationOutcome.IssueType code;
+
+    @Column(columnDefinition = "varchar(max)", nullable = false)
+    private String message;
 
     private String location;
 
-    public ResultEntity(ResultModel resultModel, String tenantId, String reportId) {
-        this.message = resultModel.getMessage();
-        this.expression = resultModel.getExpression();
-        this.severity = resultModel.getSeverity();
-        this.type = resultModel.getType();
-        this.location = resultModel.getLocation();
+    @Column(length = 1000)
+    private String expression;
+
+    public ResultEntity() {
     }
 
-    public static ResultModel toModel(ResultEntity entity) {
+    public ResultEntity(ResultModel model) {
+        this.severity = model.getSeverity();
+        this.code = model.getCode();
+        this.message = model.getMessage();
+        this.location = model.getLocation();
+        this.expression = model.getExpression();
+    }
+
+    public ResultModel toModel() {
         ResultModel model = new ResultModel();
-        model.setMessage(entity.getMessage());
-        model.setExpression(entity.getExpression());
-        model.setSeverity(entity.getSeverity());
-        model.setType(entity.getType());
-        model.setLocation(entity.getLocation());
+        model.setSeverity(this.severity);
+        model.setCode(this.code);
+        model.setMessage(this.message);
+        model.setLocation(this.location);
+        model.setExpression(this.expression);
         return model;
     }
 }

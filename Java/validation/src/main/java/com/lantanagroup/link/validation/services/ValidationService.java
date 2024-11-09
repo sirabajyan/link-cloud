@@ -74,7 +74,7 @@ public class ValidationService {
             result.setMessage(issue.getMessage());
             result.setExpression(issue.getLocationString());
             result.setSeverity(getIssueSeverity(issue.getSeverity()));
-            result.setType(getIssueCode(issue.getMessageId()));
+            result.setCode(getIssueCode(issue.getMessageId()));
 
             if (issue.getLocationLine() != null && issue.getLocationCol() != null) {
                 result.setLocation(String.format("%d:%d", issue.getLocationLine(), issue.getLocationCol()));
@@ -92,7 +92,7 @@ public class ValidationService {
             issue.setDiagnostics(result.getMessage());
             issue.getExpression().add(new StringType(result.getExpression()));
             issue.setSeverity(result.getSeverity());
-            issue.setCode(result.getType());
+            issue.setCode(result.getCode());
 
             if (StringUtils.isNotEmpty(result.getLocation())) {
                 issue.addLocation(result.getLocation());
@@ -104,7 +104,7 @@ public class ValidationService {
 
     public void saveResults(List<ResultModel> results, String tenantId, String reportId) {
         this.resultRepository.deleteByTenantIdAndReportId(tenantId, reportId);
-        List<ResultEntity> entities = results.stream().map(r -> new ResultEntity(r, tenantId, reportId)).toList();
+        List<ResultEntity> entities = results.stream().map(ResultEntity::new).toList();
         this.resultRepository.saveAll(entities);
     }
 
