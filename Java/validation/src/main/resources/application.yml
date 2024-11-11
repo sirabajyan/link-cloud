@@ -3,7 +3,7 @@ artifact:
 loki:
   enabled: false
   url: ''
-  app: link-dev
+  app: link-cloud
 
 server:
   port: 31820
