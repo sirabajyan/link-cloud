@@ -9,11 +9,11 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class PatientEvaluatedConsumer {
-    private static final Logger log = LoggerFactory.getLogger(PatientEvaluatedConsumer.class);
+    private static final Logger logger = LoggerFactory.getLogger(PatientEvaluatedConsumer.class);
 
     @KafkaListener(topics = "PatientEvaluated", properties = {"spring.json.value.default.type=com.lantanagroup.link.validation.model.PatientEvaluatedModel"})
     public void listen(ConsumerRecord<String, PatientEvaluatedModel> record) {
         PatientEvaluatedModel value = record.value();
-        log.info("Received PatientEvaluated:\n\tTenant ID: {}\n\tPatient ID: {}", value.getTenantId(), value.getPatientId());
+        logger.info("Received PatientEvaluated:\n\tTenant ID: {}\n\tPatient ID: {}", value.getTenantId(), value.getPatientId());
     }
 }

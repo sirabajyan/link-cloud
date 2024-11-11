@@ -29,7 +29,7 @@ import java.util.concurrent.ForkJoinPool;
 @Service
 @RequestScope
 public class ValidationService {
-    private static final Logger log = LoggerFactory.getLogger(ValidationService.class);
+    private static final Logger logger = LoggerFactory.getLogger(ValidationService.class);
 
     private final FhirContext fhirContext;
     private final ArtifactService artifactService;
@@ -49,7 +49,7 @@ public class ValidationService {
     }
 
     private void initArtifacts() {
-        log.info("Loading artifacts");
+        logger.info("Loading artifacts");
 
         ValidationSupportChain validationSupportChain = new ValidationSupportChain(
                 new DefaultProfileValidationSupport(this.fhirContext),
@@ -62,11 +62,11 @@ public class ValidationService {
         this.validator.registerValidatorModule(module);
         this.validator.setConcurrentBundleValidation(true);
 
-        log.info("Done loading artifacts into validator");
+        logger.info("Done loading artifacts into validator");
     }
 
     public List<ResultModel> validate(Resource resource) {
-        log.info("Validating resource");
+        logger.info("Validating resource");
 
         ValidationResult validationResult = this.validator.validateWithResult(resource);
         return validationResult.getMessages().stream().map(issue -> {

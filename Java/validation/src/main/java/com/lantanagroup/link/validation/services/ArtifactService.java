@@ -29,7 +29,7 @@ import java.util.Objects;
 
 @Service
 public class ArtifactService {
-    private static final Logger log = LoggerFactory.getLogger(ArtifactService.class);
+    private static final Logger logger = LoggerFactory.getLogger(ArtifactService.class);
     private static final List<String> allowedResourceTypes = List.of("StructureDefinition", "ValueSet", "CodeSystem");
 
     private final FhirContext fhirContext;
@@ -46,7 +46,7 @@ public class ArtifactService {
         if (artifactConfig.isInit()) {
             this.initArtifacts();
         } else {
-            log.info("Skipping artifact initialization due to configuration");
+            logger.info("Skipping artifact initialization due to configuration");
         }
     }
 
@@ -107,7 +107,7 @@ public class ArtifactService {
         try {
             resources = resolver.getResources(path);
         } catch (IOException e) {
-            log.error("Error initializing artifacts for type {} from path {} in class resources", type, path, e);
+            logger.error("Error initializing artifacts for type {} from path {} in class resources", type, path, e);
             throw new RuntimeException("Error initializing artifacts");
         }
 
@@ -121,7 +121,7 @@ public class ArtifactService {
             if (StringUtils.isEmpty(fileName) || StringUtils.isEmpty(extension)) {
                 continue;
             } else if (!extensions.contains(extension.toLowerCase())) {
-                log.warn("Unexpected file name {} for type {} in class resources", resourceResource.getFilename(), type);
+                logger.warn("Unexpected file name {} for type {} in class resources", resourceResource.getFilename(), type);
                 continue;
             }
 
@@ -129,7 +129,7 @@ public class ArtifactService {
             fileName = fileName.substring(0, resourceResource.getFilename().lastIndexOf("."))
                     .replaceFirst("^(CodeSystem|ValueSet)-", "");
 
-            log.info("Loading resource {}", resourceResource.getFilename());
+            logger.info("Loading resource {}", resourceResource.getFilename());
 
             try {
                 byte[] resourceContent = resourceResource.getContentAsByteArray();
@@ -143,7 +143,7 @@ public class ArtifactService {
                     invalidateValidationSupport();
                 }
             } catch (IOException e) {
-                log.error("Error get content for resource in class resources {}", resourceResource.getFilename(), e);
+                logger.error("Error get content for resource in class resources {}", resourceResource.getFilename(), e);
             }
         }
     }
@@ -170,18 +170,18 @@ public class ArtifactService {
             throw new RuntimeException("Artifact is not an NPM package");
         }
 
-        log.info("Loading package into validation support: {}", artifactEntity.getName());
+        logger.info("Loading package into validation support: {}", artifactEntity.getName());
 
         try (InputStream stream = new ByteArrayInputStream(artifactEntity.getContent())) {
             NpmPackage npmPackage = NpmPackage.fromPackage(stream);
             List<String> resourceNames = npmPackage.listResources(allowedResourceTypes);
 
             for (String resourceName : resourceNames) {
-                log.debug("Loading resource from package {}: {}", artifactEntity.getName(), resourceName);
+                logger.debug("Loading resource from package {}: {}", artifactEntity.getName(), resourceName);
                 try (InputStream resourceContent = npmPackage.loadResource(resourceName)) {
                     this.loadResource(resourceContent, resourceName);
                 } catch (IOException | DataFormatException e) {
-                    log.warn("Error loading resource from package {}: {}", artifactEntity.getName(), resourceName, e);
+                    logger.warn("Error loading resource from package {}: {}", artifactEntity.getName(), resourceName, e);
                 }
             }
         } catch (IOException e) {
@@ -194,12 +194,12 @@ public class ArtifactService {
             throw new RuntimeException("Artifact is not a resource");
         }
 
-        log.info("Loading resource into validation support: {}", artifactEntity.getName());
+        logger.info("Loading resource into validation support: {}", artifactEntity.getName());
 
         try (InputStream stream = new ByteArrayInputStream(artifactEntity.getContent())) {
             this.loadResource(stream, artifactEntity.getName());
         } catch (IOException | DataFormatException e) {
-            log.warn("Error loading resource {}", artifactEntity.getName(), e);
+            logger.warn("Error loading resource {}", artifactEntity.getName(), e);
         }
     }
 
@@ -213,7 +213,7 @@ public class ArtifactService {
             json = IOUtils.toString(stream, StandardCharsets.UTF_8)
                     .replaceAll("<!--.+?-->", "");
         } catch (IOException e) {
-            log.error("Error reading resource {}", name, e);
+            logger.error("Error reading resource {}", name, e);
             return;
         }
 
@@ -223,7 +223,7 @@ public class ArtifactService {
             IBaseResource resource = parser.parseResource(json);
             this.validationSupport.addResource(resource);
         } catch (DataFormatException e) {
-            log.warn("Error loading resource {} with starting content {}", name, StringUtils.truncate(json, 100), e);
+            logger.warn("Error loading resource {} with starting content {}", name, StringUtils.truncate(json, 100), e);
         }
     }
 }

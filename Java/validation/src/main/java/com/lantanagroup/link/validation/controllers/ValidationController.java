@@ -19,7 +19,7 @@ import java.util.List;
 @RequestMapping("/api/validation")
 @SecurityRequirement(name = "bearer-key")
 public class ValidationController {
-    private static final Logger log = LoggerFactory.getLogger(ValidationController.class);
+    private static final Logger logger = LoggerFactory.getLogger(ValidationController.class);
 
     private final ValidationService validationService;
 
@@ -35,7 +35,7 @@ public class ValidationController {
     )
     @PostMapping("/validate")
     public OperationOutcome validate(@RequestBody Bundle bundle) {
-        log.info("Validating bundle with ID {}", bundle.hasId() ? bundle.getIdElement().getIdPart() : "UNKNOWN");
+        logger.info("Validating bundle with ID {}", bundle.hasId() ? bundle.getIdElement().getIdPart() : "UNKNOWN");
         List<ResultModel> results = this.validationService.validate(bundle);
         return this.validationService.convertToOperationOutcome(results);
     }

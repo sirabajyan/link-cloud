@@ -10,7 +10,7 @@ import org.springframework.kafka.listener.MessageListenerContainer;
 import org.springframework.util.backoff.FixedBackOff;
 
 public class KafkaErrorHandler extends DefaultErrorHandler {
-    private static final Logger log = LoggerFactory.getLogger(KafkaErrorHandler.class);
+    private static final Logger logger = LoggerFactory.getLogger(KafkaErrorHandler.class);
 
     public KafkaErrorHandler() {
         super(new FixedBackOff(10000, 2));
@@ -34,11 +34,11 @@ public class KafkaErrorHandler extends DefaultErrorHandler {
 
     private void handle(Exception exception, Consumer<?, ?> consumer) {
         if (exception instanceof RecordDeserializationException ex) {
-            log.error("Kafka deserialization exception not handled: {}", exception.getMessage());
+            logger.error("Kafka deserialization exception not handled: {}", exception.getMessage());
             consumer.seek(ex.topicPartition(), ex.offset() + 1L);
             consumer.commitSync();
         } else {
-            log.error("Exception not handled", exception);
+            logger.error("Exception not handled", exception);
         }
     }
 }

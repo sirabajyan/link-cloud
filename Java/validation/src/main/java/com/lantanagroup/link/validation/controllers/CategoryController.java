@@ -24,7 +24,7 @@ import java.util.stream.Collectors;
 @RequestMapping("/api/category")
 @SecurityRequirement(name = "bearer-key")
 public class CategoryController {
-    private static final Logger log = org.slf4j.LoggerFactory.getLogger(CategoryController.class);
+    private static final Logger logger = org.slf4j.LoggerFactory.getLogger(CategoryController.class);
 
     private final CategoryRepository categoryRepository;
     private final CategoryRuleRepository categoryRuleRepository;
@@ -56,7 +56,7 @@ public class CategoryController {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Category guidance is required");
         }
 
-        log.info("Creating/updating category with ID: {}", category.getId());
+        logger.info("Creating/updating category with ID: {}", category.getId());
 
         this.categoryRepository.save(category);
     }
@@ -90,7 +90,7 @@ public class CategoryController {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Category rules are required");
         }
 
-        log.info("Creating/updating rules for category with ID: {}", categoryId);
+        logger.info("Creating/updating rules for category with ID: {}", categoryId);
 
         CategoryEntity category = this.categoryRepository.findById(categoryId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Category not found"));
@@ -137,7 +137,7 @@ public class CategoryController {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Rules are required for all categories");
         }
 
-        log.info("Bulk saving {} categories", categories.size());
+        logger.info("Bulk saving {} categories", categories.size());
 
         for (BulkSaveCategoryModel category : categories) {
             CategoryEntity categoryEntity = this.categoryRepository.save(category.toEntity());
@@ -149,7 +149,7 @@ public class CategoryController {
     @DeleteMapping("/{categoryId}")
     @Transactional
     public void deleteCategory(@PathVariable String categoryId) {
-        log.info("Deleting category with ID: {}", categoryId);
+        logger.info("Deleting category with ID: {}", categoryId);
         this.categoryRuleRepository.deleteByCategoryId(categoryId);
         this.categoryRepository.deleteById(categoryId);
     }

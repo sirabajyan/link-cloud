@@ -13,7 +13,7 @@ import java.io.InputStream;
 
 @Service
 public class CategorizationService {
-    private static final Logger log = LoggerFactory.getLogger(CategorizationService.class);
+    private static final Logger logger = LoggerFactory.getLogger(CategorizationService.class);
 
     private final CategoryRepository categoryRepository;
     private final CategoryRuleRepository categoryRuleRepository;
@@ -24,17 +24,17 @@ public class CategorizationService {
     }
 
     public void initCategories() {
-        log.info("Initializing categories");
+        logger.info("Initializing categories");
         ObjectMapper mapper = new ObjectMapper();
         try (InputStream stream = ClassLoader.getSystemResourceAsStream("categories.json")) {
             BulkSaveCategoryModel[] categories = mapper.readValue(stream, BulkSaveCategoryModel[].class);
             for (BulkSaveCategoryModel category : categories) {
-                log.debug("Initializing category: {}", category.getId());
+                logger.debug("Initializing category: {}", category.getId());
                 CategoryEntity entity = categoryRepository.save(category.toEntity());
                 categoryRuleRepository.save(category.toRuleEntity(entity));
             }
         } catch (Exception e) {
-            log.error("Failed to initialize categories", e);
+            logger.error("Failed to initialize categories", e);
             throw new RuntimeException(e);
         }
     }
