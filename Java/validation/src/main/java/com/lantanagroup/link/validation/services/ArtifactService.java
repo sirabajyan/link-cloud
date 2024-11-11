@@ -100,7 +100,7 @@ public class ArtifactService {
 
     private void initArtifacts(ArtifactType type) {
         List<String> extensions = type == ArtifactType.RESOURCE ? List.of("json", "xml") : List.of("tgz");
-        String path = type == ArtifactType.RESOURCE ? "classpath:/resources/**" : "classpath:/packages/**";
+        String path = type == ArtifactType.RESOURCE ? "classpath:/artifacts/resources/**" : "classpath:/artifacts/packages/**";
         PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
         org.springframework.core.io.Resource[] resources;
 
