@@ -1,7 +1,7 @@
 package com.lantanagroup.link.validation.entities;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.lantanagroup.link.validation.model.CategorySeverity;
+import com.lantanagroup.link.validation.models.CategorySeverity;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;

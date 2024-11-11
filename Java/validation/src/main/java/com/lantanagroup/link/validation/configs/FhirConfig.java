@@ -1,4 +1,4 @@
-package com.lantanagroup.link.validation.config;
+package com.lantanagroup.link.validation.configs;
 
 import ca.uhn.fhir.context.FhirContext;
 import org.springframework.context.annotation.Bean;

@@ -1,4 +1,4 @@
-package com.lantanagroup.link.validation.model;
+package com.lantanagroup.link.validation.models;
 
 public enum CategorySeverity {
     ERROR,

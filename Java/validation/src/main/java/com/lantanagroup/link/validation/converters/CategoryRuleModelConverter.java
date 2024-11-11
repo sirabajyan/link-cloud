@@ -1,6 +1,6 @@
 package com.lantanagroup.link.validation.converters;
 
-import com.lantanagroup.link.validation.model.CategoryRuleModel;
+import com.lantanagroup.link.validation.models.CategoryRuleModel;
 import jakarta.persistence.Converter;
 
 @Converter

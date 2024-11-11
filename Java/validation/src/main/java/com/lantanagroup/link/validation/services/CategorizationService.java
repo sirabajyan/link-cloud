@@ -2,7 +2,7 @@ package com.lantanagroup.link.validation.services;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.lantanagroup.link.validation.entities.CategoryEntity;
-import com.lantanagroup.link.validation.model.BulkSaveCategoryModel;
+import com.lantanagroup.link.validation.models.BulkSaveCategoryModel;
 import com.lantanagroup.link.validation.repositories.CategoryRepository;
 import com.lantanagroup.link.validation.repositories.CategoryRuleRepository;
 import org.slf4j.Logger;

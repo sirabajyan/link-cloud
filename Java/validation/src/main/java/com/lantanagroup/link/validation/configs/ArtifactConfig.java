@@ -1,4 +1,4 @@
-package com.lantanagroup.link.validation.config;
+package com.lantanagroup.link.validation.configs;
 
 import lombok.Getter;
 import lombok.Setter;

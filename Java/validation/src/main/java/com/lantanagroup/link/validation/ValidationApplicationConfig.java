@@ -1,7 +1,7 @@
 package com.lantanagroup.link.validation;
 
 import com.lantanagroup.link.shared.BaseSpringConfig;
-import com.lantanagroup.link.validation.model.PatientEvaluatedModel;
+import com.lantanagroup.link.validation.models.PatientEvaluatedModel;
 import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

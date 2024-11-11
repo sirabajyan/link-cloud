@@ -1,7 +1,7 @@
 package com.lantanagroup.link.validation.entities;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.lantanagroup.link.validation.model.ArtifactType;
+import com.lantanagroup.link.validation.models.ArtifactType;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;

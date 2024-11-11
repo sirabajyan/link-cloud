@@ -1,6 +1,6 @@
 package com.lantanagroup.link.validation;
 
-import com.lantanagroup.link.validation.config.ArtifactConfig;
+import com.lantanagroup.link.validation.configs.ArtifactConfig;
 import org.springframework.boot.Banner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

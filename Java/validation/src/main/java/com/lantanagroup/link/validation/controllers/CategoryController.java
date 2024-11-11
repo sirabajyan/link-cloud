@@ -2,8 +2,8 @@ package com.lantanagroup.link.validation.controllers;
 
 import com.lantanagroup.link.validation.entities.CategoryEntity;
 import com.lantanagroup.link.validation.entities.CategoryRuleEntity;
-import com.lantanagroup.link.validation.model.BulkSaveCategoryModel;
-import com.lantanagroup.link.validation.model.CategoryRuleModel;
+import com.lantanagroup.link.validation.models.BulkSaveCategoryModel;
+import com.lantanagroup.link.validation.models.CategoryRuleModel;
 import com.lantanagroup.link.validation.repositories.CategoryRepository;
 import com.lantanagroup.link.validation.repositories.CategoryRuleRepository;
 import com.lantanagroup.link.validation.services.CategorizationService;

@@ -2,7 +2,7 @@ package com.lantanagroup.link.validation.entities;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.lantanagroup.link.validation.converters.CategoryRuleModelConverter;
-import com.lantanagroup.link.validation.model.CategoryRuleModel;
+import com.lantanagroup.link.validation.models.CategoryRuleModel;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;

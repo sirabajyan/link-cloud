@@ -1,4 +1,4 @@
-package com.lantanagroup.link.validation.model;
+package com.lantanagroup.link.validation.models;
 
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;

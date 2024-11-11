@@ -7,7 +7,7 @@ import ca.uhn.fhir.validation.IValidatorModule;
 import ca.uhn.fhir.validation.ResultSeverityEnum;
 import ca.uhn.fhir.validation.ValidationResult;
 import com.lantanagroup.link.validation.entities.ResultEntity;
-import com.lantanagroup.link.validation.model.ResultModel;
+import com.lantanagroup.link.validation.models.ResultModel;
 import com.lantanagroup.link.validation.repositories.ResultRepository;
 import org.apache.commons.lang3.StringUtils;
 import org.hl7.fhir.common.hapi.validation.support.CachingValidationSupport;

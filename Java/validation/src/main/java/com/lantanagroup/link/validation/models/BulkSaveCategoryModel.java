@@ -1,4 +1,4 @@
-package com.lantanagroup.link.validation.model;
+package com.lantanagroup.link.validation.models;
 
 import com.lantanagroup.link.validation.entities.CategoryEntity;
 import com.lantanagroup.link.validation.entities.CategoryRuleEntity;

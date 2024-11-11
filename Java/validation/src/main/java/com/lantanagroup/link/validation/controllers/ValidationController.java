@@ -1,6 +1,6 @@
 package com.lantanagroup.link.validation.controllers;
 
-import com.lantanagroup.link.validation.model.ResultModel;
+import com.lantanagroup.link.validation.models.ResultModel;
 import com.lantanagroup.link.validation.services.ValidationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
