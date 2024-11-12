@@ -1,7 +1,6 @@
 package com.lantanagroup.link.validation.entities;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.lantanagroup.link.validation.models.ArtifactType;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -9,9 +8,8 @@ import lombok.Setter;
 @Getter
 @Setter
 @Entity
-@Table(name = "artifact")
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class ArtifactEntity {
+public class Artifact {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

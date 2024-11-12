@@ -1,4 +1,4 @@
-package com.lantanagroup.link.validation.models;
+package com.lantanagroup.link.validation.matchers;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -9,8 +9,8 @@ import java.util.List;
 
 @Getter
 @Setter
-public class CompositeCategoryRuleModel extends InvertibleCategoryRuleModel {
-    private List<CategoryRuleModel> children;
+public class CompositeMatcher extends InvertibleMatcher {
+    private List<Matcher> children;
     private boolean requiresAllChildren;
 
     @Override
@@ -18,12 +18,15 @@ public class CompositeCategoryRuleModel extends InvertibleCategoryRuleModel {
         if (CollectionUtils.isEmpty(children)) {
             throw new IllegalStateException("Composite rule must specify children");
         }
-        boolean shortCircuitResult = !requiresAllChildren;
-        for (CategoryRuleModel child : children) {
-            if (child.isMatch(issue) == shortCircuitResult) {
-                return shortCircuitResult;
+        for (Matcher child : children) {
+            boolean isMatch = child.isMatch(issue);
+            if (isMatch && !requiresAllChildren) {
+                return true;
+            }
+            if (!isMatch && requiresAllChildren) {
+                return false;
             }
         }
-        return !shortCircuitResult;
+        return requiresAllChildren;
     }
 }

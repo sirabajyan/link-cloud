@@ -1,7 +1,6 @@
 package com.lantanagroup.link.validation.entities;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.lantanagroup.link.validation.models.CategorySeverity;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -9,9 +8,20 @@ import lombok.Setter;
 @Getter
 @Setter
 @Entity
-@Table(name = "category")
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class CategoryEntity {
+public class Category {
+    @Transient
+    public static final Category UNCATEGORIZED;
+
+    static {
+        UNCATEGORIZED = new Category();
+        UNCATEGORIZED.setId("uncategorized");
+        UNCATEGORIZED.setTitle("Uncategorized");
+        UNCATEGORIZED.setSeverity(CategorySeverity.WARNING);
+        UNCATEGORIZED.setAcceptable(false);
+        UNCATEGORIZED.setGuidance("These issues need to be categorized.");
+    }
+
     @Id
     private String id;
 
@@ -27,14 +37,4 @@ public class CategoryEntity {
 
     @Column(length = 1000, nullable = false)
     private String guidance;
-
-    public static CategoryEntity uncategorized() {
-        CategoryEntity category = new CategoryEntity();
-        category.setId("uncategorized");
-        category.setTitle("Uncategorized");
-        category.setSeverity(CategorySeverity.WARNING);
-        category.setAcceptable(false);
-        category.setGuidance("These issues need to be categorized.");
-        return category;
-    }
 }

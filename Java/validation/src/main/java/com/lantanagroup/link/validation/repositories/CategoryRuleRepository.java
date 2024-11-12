@@ -1,13 +1,13 @@
 package com.lantanagroup.link.validation.repositories;
 
-import com.lantanagroup.link.validation.entities.CategoryRuleEntity;
+import com.lantanagroup.link.validation.entities.CategoryRule;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
 import java.util.List;
 
-public interface CategoryRuleRepository extends JpaRepository<CategoryRuleEntity, Long> {
-    List<CategoryRuleEntity> findByCategoryId(String categoryId);
+public interface CategoryRuleRepository extends JpaRepository<CategoryRule, Long> {
+    List<CategoryRule> findByCategoryId(String categoryId);
 
     @Query(
             value = """
@@ -16,7 +16,7 @@ public interface CategoryRuleRepository extends JpaRepository<CategoryRuleEntity
                     WHERE category_id = :categoryId
                     ORDER BY timestamp DESC;""",
             nativeQuery = true)
-    CategoryRuleEntity getLatestByCategoryId(String categoryId);
+    CategoryRule findLatestByCategoryId(String categoryId);
 
     void deleteByCategoryId(String categoryId);
 }

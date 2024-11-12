@@ -1,8 +1,8 @@
 package com.lantanagroup.link.validation.entities;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.lantanagroup.link.validation.converters.CategoryRuleModelConverter;
-import com.lantanagroup.link.validation.models.CategoryRuleModel;
+import com.lantanagroup.link.validation.converters.MatcherConverter;
+import com.lantanagroup.link.validation.matchers.Matcher;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -12,21 +12,20 @@ import java.time.OffsetDateTime;
 @Getter
 @Setter
 @Entity
-@Table(name = "category_rule")
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class CategoryRuleEntity {
+public class CategoryRule {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "category_id", nullable = false, foreignKey = @ForeignKey(name = "fk_category_rule_category_id"))
-    private CategoryEntity category;
+    @ManyToOne(optional = false)
+    @JoinColumn(foreignKey = @ForeignKey(name = "fk_category_rule_category_id"))
+    private Category category;
 
     @Column(nullable = false)
     private OffsetDateTime timestamp = OffsetDateTime.now();
 
-    @Convert(converter = CategoryRuleModelConverter.class)
+    @Convert(converter = MatcherConverter.class)
     @Column(columnDefinition = "varchar(max)", nullable = false)
-    private CategoryRuleModel model;
+    private Matcher matcher;
 }

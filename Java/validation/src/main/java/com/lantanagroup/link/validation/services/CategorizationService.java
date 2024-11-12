@@ -1,8 +1,8 @@
 package com.lantanagroup.link.validation.services;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.lantanagroup.link.validation.entities.CategoryEntity;
-import com.lantanagroup.link.validation.models.BulkSaveCategoryModel;
+import com.lantanagroup.link.validation.entities.Category;
+import com.lantanagroup.link.validation.entities.CategorySnapshot;
 import com.lantanagroup.link.validation.repositories.CategoryRepository;
 import com.lantanagroup.link.validation.repositories.CategoryRuleRepository;
 import org.slf4j.Logger;
@@ -27,11 +27,11 @@ public class CategorizationService {
         logger.info("Initializing categories");
         ObjectMapper mapper = new ObjectMapper();
         try (InputStream stream = ClassLoader.getSystemResourceAsStream("categories.json")) {
-            BulkSaveCategoryModel[] categories = mapper.readValue(stream, BulkSaveCategoryModel[].class);
-            for (BulkSaveCategoryModel category : categories) {
+            CategorySnapshot[] categories = mapper.readValue(stream, CategorySnapshot[].class);
+            for (CategorySnapshot category : categories) {
                 logger.debug("Initializing category: {}", category.getId());
-                CategoryEntity entity = categoryRepository.save(category.toEntity());
-                categoryRuleRepository.save(category.toRuleEntity(entity));
+                Category entity = categoryRepository.save(category.toCategory());
+                categoryRuleRepository.save(category.toCategoryRule(entity));
             }
         } catch (Exception e) {
             logger.error("Failed to initialize categories", e);

@@ -6,8 +6,7 @@ import ca.uhn.fhir.validation.FhirValidator;
 import ca.uhn.fhir.validation.IValidatorModule;
 import ca.uhn.fhir.validation.ResultSeverityEnum;
 import ca.uhn.fhir.validation.ValidationResult;
-import com.lantanagroup.link.validation.entities.ResultEntity;
-import com.lantanagroup.link.validation.models.ResultModel;
+import com.lantanagroup.link.validation.entities.Result;
 import com.lantanagroup.link.validation.repositories.ResultRepository;
 import org.apache.commons.lang3.StringUtils;
 import org.hl7.fhir.common.hapi.validation.support.CachingValidationSupport;
@@ -48,66 +47,6 @@ public class ValidationService {
         initArtifacts();
     }
 
-    private void initArtifacts() {
-        logger.info("Loading artifacts");
-
-        ValidationSupportChain validationSupportChain = new ValidationSupportChain(
-                new DefaultProfileValidationSupport(this.fhirContext),
-                new InMemoryTerminologyServerValidationSupport(this.fhirContext),
-                this.artifactService.getValidationSupport()
-        );
-        this.validator = this.fhirContext.newValidator();
-        this.validator.setExecutorService(ForkJoinPool.commonPool());
-        IValidatorModule module = new FhirInstanceValidator(new CachingValidationSupport(validationSupportChain));
-        this.validator.registerValidatorModule(module);
-        this.validator.setConcurrentBundleValidation(true);
-
-        logger.info("Done loading artifacts into validator");
-    }
-
-    public List<ResultModel> validate(Resource resource) {
-        logger.info("Validating resource");
-
-        ValidationResult validationResult = this.validator.validateWithResult(resource);
-        return validationResult.getMessages().stream().map(issue -> {
-            ResultModel result = new ResultModel();
-            result.setMessage(issue.getMessage());
-            result.setExpression(issue.getLocationString());
-            result.setSeverity(getIssueSeverity(issue.getSeverity()));
-            result.setCode(getIssueCode(issue.getMessageId()));
-
-            if (issue.getLocationLine() != null && issue.getLocationCol() != null) {
-                result.setLocation(String.format("%d:%d", issue.getLocationLine(), issue.getLocationCol()));
-            }
-
-            return result;
-        }).toList();
-    }
-
-    public OperationOutcome convertToOperationOutcome(List<ResultModel> results) {
-        OperationOutcome operationOutcome = new OperationOutcome();
-
-        results.forEach(result -> {
-            OperationOutcome.OperationOutcomeIssueComponent issue = operationOutcome.addIssue();
-            issue.setDiagnostics(result.getMessage());
-            issue.getExpression().add(new StringType(result.getExpression()));
-            issue.setSeverity(result.getSeverity());
-            issue.setCode(result.getCode());
-
-            if (StringUtils.isNotEmpty(result.getLocation())) {
-                issue.addLocation(result.getLocation());
-            }
-        });
-
-        return operationOutcome;
-    }
-
-    public void saveResults(List<ResultModel> results, String tenantId, String reportId) {
-        this.resultRepository.deleteByTenantIdAndReportId(tenantId, reportId);
-        List<ResultEntity> entities = results.stream().map(ResultEntity::new).toList();
-        this.resultRepository.saveAll(entities);
-    }
-
     private static OperationOutcome.IssueSeverity getIssueSeverity(ResultSeverityEnum severity) {
         return switch (severity) {
             case ERROR -> OperationOutcome.IssueSeverity.ERROR;
@@ -139,5 +78,64 @@ public class ValidationService {
             case "Type_Specific_Checks_DT_Code_WS" -> OperationOutcome.IssueType.INVALID;
             default -> OperationOutcome.IssueType.NULL;
         };
+    }
+
+    private void initArtifacts() {
+        logger.info("Loading artifacts");
+
+        ValidationSupportChain validationSupportChain = new ValidationSupportChain(
+                new DefaultProfileValidationSupport(this.fhirContext),
+                new InMemoryTerminologyServerValidationSupport(this.fhirContext),
+                this.artifactService.getValidationSupport()
+        );
+        this.validator = this.fhirContext.newValidator();
+        this.validator.setExecutorService(ForkJoinPool.commonPool());
+        IValidatorModule module = new FhirInstanceValidator(new CachingValidationSupport(validationSupportChain));
+        this.validator.registerValidatorModule(module);
+        this.validator.setConcurrentBundleValidation(true);
+
+        logger.info("Done loading artifacts into validator");
+    }
+
+    public List<Result> validate(Resource resource) {
+        logger.info("Validating resource");
+
+        ValidationResult validationResult = this.validator.validateWithResult(resource);
+        return validationResult.getMessages().stream().map(issue -> {
+            Result result = new Result();
+            result.setMessage(issue.getMessage());
+            result.setExpression(issue.getLocationString());
+            result.setSeverity(getIssueSeverity(issue.getSeverity()));
+            result.setCode(getIssueCode(issue.getMessageId()));
+
+            if (issue.getLocationLine() != null && issue.getLocationCol() != null) {
+                result.setLocation(String.format("%d:%d", issue.getLocationLine(), issue.getLocationCol()));
+            }
+
+            return result;
+        }).toList();
+    }
+
+    public OperationOutcome convertToOperationOutcome(List<Result> results) {
+        OperationOutcome operationOutcome = new OperationOutcome();
+
+        results.forEach(result -> {
+            OperationOutcome.OperationOutcomeIssueComponent issue = operationOutcome.addIssue();
+            issue.setDiagnostics(result.getMessage());
+            issue.getExpression().add(new StringType(result.getExpression()));
+            issue.setSeverity(result.getSeverity());
+            issue.setCode(result.getCode());
+
+            if (StringUtils.isNotEmpty(result.getLocation())) {
+                issue.addLocation(result.getLocation());
+            }
+        });
+
+        return operationOutcome;
+    }
+
+    public void saveResults(List<Result> results, String tenantId, String reportId) {
+        this.resultRepository.deleteByTenantIdAndReportId(tenantId, reportId);
+        this.resultRepository.saveAll(results);
     }
 }

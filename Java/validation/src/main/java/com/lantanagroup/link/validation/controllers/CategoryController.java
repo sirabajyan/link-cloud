@@ -1,9 +1,9 @@
 package com.lantanagroup.link.validation.controllers;
 
-import com.lantanagroup.link.validation.entities.CategoryEntity;
-import com.lantanagroup.link.validation.entities.CategoryRuleEntity;
-import com.lantanagroup.link.validation.models.BulkSaveCategoryModel;
-import com.lantanagroup.link.validation.models.CategoryRuleModel;
+import com.lantanagroup.link.validation.entities.Category;
+import com.lantanagroup.link.validation.entities.CategoryRule;
+import com.lantanagroup.link.validation.entities.CategorySnapshot;
+import com.lantanagroup.link.validation.matchers.Matcher;
 import com.lantanagroup.link.validation.repositories.CategoryRepository;
 import com.lantanagroup.link.validation.repositories.CategoryRuleRepository;
 import com.lantanagroup.link.validation.services.CategorizationService;
@@ -47,7 +47,7 @@ public class CategoryController {
 
     @Operation(summary = "Create or update a category", tags = {"Categories"})
     @PostMapping
-    public void createOrUpdateCategory(@RequestBody CategoryEntity category) {
+    public void createOrUpdateCategory(@RequestBody Category category) {
         if (StringUtils.isEmpty(category.getId())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Category ID is required");
         }
@@ -63,25 +63,25 @@ public class CategoryController {
 
     @Operation(summary = "Get all categories", tags = {"Categories"})
     @GetMapping
-    public List<CategoryEntity> getCategories() {
+    public List<Category> getCategories() {
         return this.categoryRepository.findAll();
     }
 
     @Operation(summary = "Get the latest version of rules for a category by ID", tags = {"Categories"})
     @GetMapping("/{categoryId}/rules")
-    public CategoryRuleModel getCategoryRules(@PathVariable String categoryId) {
-        CategoryRuleEntity categoryRule = this.categoryRuleRepository.getLatestByCategoryId(categoryId);
+    public Matcher getCategoryRules(@PathVariable String categoryId) {
+        CategoryRule categoryRule = this.categoryRuleRepository.findLatestByCategoryId(categoryId);
 
         if (categoryRule == null) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Category rules not found");
         }
 
-        return categoryRule.getModel();
+        return categoryRule.getMatcher();
     }
 
     @Operation(summary = "Create or update rules for a category by ID", tags = {"Categories"})
     @PostMapping("/{categoryId}/rules")
-    public void createOrUpdateCategoryRules(@PathVariable String categoryId, @RequestBody CategoryRuleModel categoryRule) {
+    public void createOrUpdateCategoryRules(@PathVariable String categoryId, @RequestBody Matcher categoryRule) {
         if (StringUtils.isEmpty(categoryId)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Category ID is required");
         }
@@ -92,29 +92,29 @@ public class CategoryController {
 
         logger.info("Creating/updating rules for category with ID: {}", categoryId);
 
-        CategoryEntity category = this.categoryRepository.findById(categoryId)
+        Category category = this.categoryRepository.findById(categoryId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Category not found"));
 
-        CategoryRuleEntity entity = new CategoryRuleEntity();
+        CategoryRule entity = new CategoryRule();
         entity.setCategory(category);
-        entity.setModel(categoryRule);
+        entity.setMatcher(categoryRule);
 
         this.categoryRuleRepository.save(entity);
     }
 
     @Operation(summary = "Get the history of rules for a category by ID", tags = {"Categories"})
     @GetMapping("/{categoryId}/rules/history")
-    public List<CategoryRuleModel> getCategoryRulesHistory(@PathVariable String categoryId) {
+    public List<Matcher> getCategoryRulesHistory(@PathVariable String categoryId) {
         return this.categoryRuleRepository.findByCategoryId(categoryId).stream()
-                .sorted(Comparator.comparing(CategoryRuleEntity::getTimestamp, Comparator.reverseOrder()))
-                .map(CategoryRuleEntity::getModel)
+                .sorted(Comparator.comparing(CategoryRule::getTimestamp, Comparator.reverseOrder()))
+                .map(CategoryRule::getMatcher)
                 .toList();
     }
 
     @Operation(summary = "Bulk save categories and their rules", tags = {"Categories"})
     @PostMapping("/bulk")
     @Transactional
-    public void bulkSaveCategories(@RequestBody List<BulkSaveCategoryModel> categories) {
+    public void bulkSaveCategories(@RequestBody List<CategorySnapshot> categories) {
         if (categories == null || categories.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Categories are required");
         } else if (categories.stream().anyMatch(category -> StringUtils.isEmpty(category.getId()))) {
@@ -122,7 +122,7 @@ public class CategoryController {
         }
 
         boolean hasDuplicateIds = categories.stream()
-                .collect(Collectors.groupingBy(BulkSaveCategoryModel::getId, Collectors.counting()))
+                .collect(Collectors.groupingBy(CategorySnapshot::getId, Collectors.counting()))
                 .values()
                 .stream()
                 .anyMatch(count -> count > 1);
@@ -131,7 +131,7 @@ public class CategoryController {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Duplicate category IDs are not allowed");
         }
 
-        boolean hasMissingRules = categories.stream().anyMatch(category -> category.getRule() == null);
+        boolean hasMissingRules = categories.stream().anyMatch(category -> category.getMatcher() == null);
 
         if (hasMissingRules) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Rules are required for all categories");
@@ -139,9 +139,9 @@ public class CategoryController {
 
         logger.info("Bulk saving {} categories", categories.size());
 
-        for (BulkSaveCategoryModel category : categories) {
-            CategoryEntity categoryEntity = this.categoryRepository.save(category.toEntity());
-            this.categoryRuleRepository.save(category.toRuleEntity(categoryEntity));
+        for (CategorySnapshot category : categories) {
+            Category categoryEntity = this.categoryRepository.save(category.toCategory());
+            this.categoryRuleRepository.save(category.toCategoryRule(categoryEntity));
         }
     }
 

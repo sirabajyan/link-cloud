@@ -1,4 +1,4 @@
-package com.lantanagroup.link.validation.models;
+package com.lantanagroup.link.validation.matchers;
 
 import org.hl7.fhir.r4.model.OperationOutcome;
 import org.hl7.fhir.r4.model.PrimitiveType;

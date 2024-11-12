@@ -1,6 +1,6 @@
 package com.lantanagroup.link.validation.controllers;
 
-import com.lantanagroup.link.validation.models.ResultModel;
+import com.lantanagroup.link.validation.entities.Result;
 import com.lantanagroup.link.validation.services.ValidationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -36,7 +36,7 @@ public class ValidationController {
     @PostMapping("/validate")
     public OperationOutcome validate(@RequestBody Bundle bundle) {
         logger.info("Validating bundle with ID {}", bundle.hasId() ? bundle.getIdElement().getIdPart() : "UNKNOWN");
-        List<ResultModel> results = this.validationService.validate(bundle);
+        List<Result> results = this.validationService.validate(bundle);
         return this.validationService.convertToOperationOutcome(results);
     }
 }

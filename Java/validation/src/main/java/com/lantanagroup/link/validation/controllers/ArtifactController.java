@@ -1,7 +1,7 @@
 package com.lantanagroup.link.validation.controllers;
 
-import com.lantanagroup.link.validation.entities.ArtifactEntity;
-import com.lantanagroup.link.validation.models.ArtifactType;
+import com.lantanagroup.link.validation.entities.Artifact;
+import com.lantanagroup.link.validation.entities.ArtifactType;
 import com.lantanagroup.link.validation.services.ArtifactService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -59,7 +59,7 @@ public class ArtifactController {
             operationId = "listArtifacts"
     )
     @GetMapping
-    public List<ArtifactEntity> listArtifacts() {
+    public List<Artifact> listArtifacts() {
         return this.artifactService.listArtifacts();
     }
 }

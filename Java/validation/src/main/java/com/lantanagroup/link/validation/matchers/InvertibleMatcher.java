@@ -1,4 +1,4 @@
-package com.lantanagroup.link.validation.models;
+package com.lantanagroup.link.validation.matchers;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -6,7 +6,7 @@ import org.hl7.fhir.r4.model.OperationOutcome;
 
 @Getter
 @Setter
-public abstract class InvertibleCategoryRuleModel implements CategoryRuleModel {
+public abstract class InvertibleMatcher implements Matcher {
     private boolean inverted;
 
     @Override

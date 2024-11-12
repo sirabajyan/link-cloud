@@ -6,8 +6,8 @@ import ca.uhn.fhir.parser.DataFormatException;
 import ca.uhn.fhir.parser.IParser;
 import ca.uhn.fhir.parser.LenientErrorHandler;
 import com.lantanagroup.link.validation.configs.ArtifactConfig;
-import com.lantanagroup.link.validation.entities.ArtifactEntity;
-import com.lantanagroup.link.validation.models.ArtifactType;
+import com.lantanagroup.link.validation.entities.Artifact;
+import com.lantanagroup.link.validation.entities.ArtifactType;
 import com.lantanagroup.link.validation.repositories.ArtifactRepository;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -51,27 +51,27 @@ public class ArtifactService {
     }
 
     public void createOrUpdateArtifact(String name, ArtifactType type, byte[] content) {
-        List<ArtifactEntity> artifactEntities = this.repository.findByTypeAndName(type, name);
+        List<Artifact> artifactEntities = this.repository.findByTypeAndName(type, name);
 
         if (artifactEntities.size() > 1) {
             throw new RuntimeException("Multiple artifacts found with the same name");
         } else if (artifactEntities.size() == 1) {
-            ArtifactEntity artifactEntity = artifactEntities.get(0);
-            artifactEntity.setContent(content);
-            this.repository.save(artifactEntity);
+            Artifact artifact = artifactEntities.get(0);
+            artifact.setContent(content);
+            this.repository.save(artifact);
             invalidateValidationSupport();
         } else {
-            ArtifactEntity artifactEntity = new ArtifactEntity();
-            artifactEntity.setType(type);
-            artifactEntity.setName(name);
-            artifactEntity.setContent(content);
-            this.repository.save(artifactEntity);
+            Artifact artifact = new Artifact();
+            artifact.setType(type);
+            artifact.setName(name);
+            artifact.setContent(content);
+            this.repository.save(artifact);
             invalidateValidationSupport();
         }
     }
 
     public void deleteArtifact(ArtifactType type, String name) {
-        List<ArtifactEntity> artifactEntities = this.repository.findByTypeAndName(type, name);
+        List<Artifact> artifactEntities = this.repository.findByTypeAndName(type, name);
         if (artifactEntities.size() > 1) {
             throw new RuntimeException("Multiple artifacts found with the same name");
         } else if (artifactEntities.size() == 1) {
@@ -80,16 +80,16 @@ public class ArtifactService {
         }
     }
 
-    public List<ArtifactEntity> listArtifacts() {
+    public List<Artifact> listArtifacts() {
         return this.repository
                 .findAll()
-                .stream().map(artifactEntity -> {
-                    artifactEntity.setContent(null);
-                    return artifactEntity;
+                .stream().map(artifact -> {
+                    artifact.setContent(null);
+                    return artifact;
                 }).toList();
     }
 
-    public List<ArtifactEntity> getArtifacts() {
+    public List<Artifact> getArtifacts() {
         return this.repository.findAll();
     }
 
@@ -135,11 +135,11 @@ public class ArtifactService {
                 byte[] resourceContent = resourceResource.getContentAsByteArray();
 
                 if (this.repository.findByTypeAndName(type, fileName).isEmpty()) {
-                    ArtifactEntity artifactEntity = new ArtifactEntity();
-                    artifactEntity.setType(type);
-                    artifactEntity.setName(fileName);
-                    artifactEntity.setContent(resourceContent);
-                    this.repository.save(artifactEntity);
+                    Artifact artifact = new Artifact();
+                    artifact.setType(type);
+                    artifact.setName(fileName);
+                    artifact.setContent(resourceContent);
+                    this.repository.save(artifact);
                     invalidateValidationSupport();
                 }
             } catch (IOException e) {
@@ -155,33 +155,33 @@ public class ArtifactService {
     public synchronized IValidationSupport getValidationSupport() {
         if (this.validationSupport == null) {
             this.validationSupport = new PrePopulatedValidationSupport(this.fhirContext);
-            for (ArtifactEntity artifactEntity : this.getArtifacts()) {
-                switch (artifactEntity.getType()) {
-                    case PACKAGE -> this.loadPackage(artifactEntity);
-                    case RESOURCE -> this.loadResource(artifactEntity);
+            for (Artifact artifact : this.getArtifacts()) {
+                switch (artifact.getType()) {
+                    case PACKAGE -> this.loadPackage(artifact);
+                    case RESOURCE -> this.loadResource(artifact);
                 }
             }
         }
         return this.validationSupport;
     }
 
-    private synchronized void loadPackage(ArtifactEntity artifactEntity) {
-        if (artifactEntity.getType() != ArtifactType.PACKAGE) {
+    private synchronized void loadPackage(Artifact artifact) {
+        if (artifact.getType() != ArtifactType.PACKAGE) {
             throw new RuntimeException("Artifact is not an NPM package");
         }
 
-        logger.info("Loading package into validation support: {}", artifactEntity.getName());
+        logger.info("Loading package into validation support: {}", artifact.getName());
 
-        try (InputStream stream = new ByteArrayInputStream(artifactEntity.getContent())) {
+        try (InputStream stream = new ByteArrayInputStream(artifact.getContent())) {
             NpmPackage npmPackage = NpmPackage.fromPackage(stream);
             List<String> resourceNames = npmPackage.listResources(allowedResourceTypes);
 
             for (String resourceName : resourceNames) {
-                logger.debug("Loading resource from package {}: {}", artifactEntity.getName(), resourceName);
+                logger.debug("Loading resource from package {}: {}", artifact.getName(), resourceName);
                 try (InputStream resourceContent = npmPackage.loadResource(resourceName)) {
                     this.loadResource(resourceContent, resourceName);
                 } catch (IOException | DataFormatException e) {
-                    logger.warn("Error loading resource from package {}: {}", artifactEntity.getName(), resourceName, e);
+                    logger.warn("Error loading resource from package {}: {}", artifact.getName(), resourceName, e);
                 }
             }
         } catch (IOException e) {
@@ -189,17 +189,17 @@ public class ArtifactService {
         }
     }
 
-    private synchronized void loadResource(ArtifactEntity artifactEntity) {
-        if (artifactEntity.getType() != ArtifactType.RESOURCE) {
+    private synchronized void loadResource(Artifact artifact) {
+        if (artifact.getType() != ArtifactType.RESOURCE) {
             throw new RuntimeException("Artifact is not a resource");
         }
 
-        logger.info("Loading resource into validation support: {}", artifactEntity.getName());
+        logger.info("Loading resource into validation support: {}", artifact.getName());
 
-        try (InputStream stream = new ByteArrayInputStream(artifactEntity.getContent())) {
-            this.loadResource(stream, artifactEntity.getName());
+        try (InputStream stream = new ByteArrayInputStream(artifact.getContent())) {
+            this.loadResource(stream, artifact.getName());
         } catch (IOException | DataFormatException e) {
-            logger.warn("Error loading resource {}", artifactEntity.getName(), e);
+            logger.warn("Error loading resource {}", artifact.getName(), e);
         }
     }
 

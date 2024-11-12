@@ -5,7 +5,7 @@
     "severity": "WARNING",
     "acceptable": true,
     "guidance": "Code display values and not usually used, except for human readability. \nAsk NHSN if they care)/validate\nAsk site/EHR about LOE to resolve",
-    "rule": {
+    "matcher": {
       "field": "DETAILS_TEXT",
       "regex": "^Wrong Display Name '.*' for .* should be .*'.*' .*",
       "inverted": false
@@ -17,7 +17,7 @@
     "severity": "ERROR",
     "acceptable": false,
     "guidance": "Needs investigation. Needs further profiling. Some may be known CodeSystems, that should not be worried about. Importance may be contextual",
-    "rule": {
+    "matcher": {
       "children": [
         {
           "field": "DETAILS_TEXT",
@@ -40,7 +40,7 @@
     "severity": "ERROR",
     "acceptable": false,
     "guidance": "Needs investigation. Needs further profiling. Some may be known CodeSystems, that should not be worried about. Importance may be contextual",
-    "rule": {
+    "matcher": {
       "children": [
         {
           "field": "DETAILS_TEXT",
@@ -63,7 +63,7 @@
     "severity": "ERROR",
     "acceptable": false,
     "guidance": "The code is not part of the required ValueSet. This may cause issues with measure calculation.",
-    "rule": {
+    "matcher": {
       "children": [
         {
           "field": "SEVERITY",
@@ -86,7 +86,7 @@
     "severity": "WARNING",
     "acceptable": true,
     "guidance": "There is an issue with the way the CodeSystem is set up on the terminology server. The full code set for the system does not appear to be on the server. The terminology server should be updated.",
-    "rule": {
+    "matcher": {
       "field": "DETAILS_TEXT",
       "regex": "^The system .* was found but did not contain enough information to properly validate the code \\(mode = fragment\\) \\(from Tx-Server\\)",
       "inverted": false
@@ -98,7 +98,7 @@
     "severity": "INFORMATION",
     "acceptable": true,
     "guidance": "This is an Epic proprietary Code System and is only a concern if there is not another coding that provides a standard recognized coding Code System (which is handled under another logged issue)",
-    "rule": {
+    "matcher": {
       "children": [
         {
           "field": "DETAILS_TEXT",
@@ -121,7 +121,7 @@
     "severity": "INFORMATION",
     "acceptable": true,
     "guidance": "This is an Medispan proprietary Code System and is only a concern if there is not another coding that provides a standard recognized coding Code System (which is handled under another logged issue)",
-    "rule": {
+    "matcher": {
       "field": "DETAILS_TEXT",
       "regex": "^Code System URI 'urn:oid:2\\.16\\.840\\.1\\.113883\\.6\\.68' is unknown so the code cannot be validated",
       "inverted": false
@@ -133,7 +133,7 @@
     "severity": "INFORMATION",
     "acceptable": true,
     "guidance": "This is an unrecognized Code System and is only a concern if there is not another coding that provides a standard recognized coding Code System (which is handled under another logged issue)",
-    "rule": {
+    "matcher": {
       "children": [
         {
           "field": "DETAILS_TEXT",
@@ -166,7 +166,7 @@
     "severity": "ERROR",
     "acceptable": false,
     "guidance": "The code is not recognized to be part of the ValueSet. This may cause issues with measure calculation",
-    "rule": {
+    "matcher": {
       "children": [
         {
           "field": "SEVERITY",
@@ -194,7 +194,7 @@
     "severity": "INFORMATION",
     "acceptable": true,
     "guidance": "Systems are allowed to include extensions (additional data). Extensions that do not modify the meaning of the data (modifierExtensions) can be safely ignored. This is not a modifierExtension.",
-    "rule": {
+    "matcher": {
       "field": "DETAILS_TEXT",
       "regex": "^The extension .* is unknown, and not allowed here$",
       "inverted": false
@@ -206,7 +206,7 @@
     "severity": "INFORMATION",
     "acceptable": true,
     "guidance": "This could indicate an underlying issue in the resource (the resource is not validating). FHIR SME may need to review.",
-    "rule": {
+    "matcher": {
       "field": "DETAILS_TEXT",
       "regex": "^This element does not match any known slice defined in the profile",
       "inverted": false
@@ -218,7 +218,7 @@
     "severity": "ERROR",
     "acceptable": false,
     "guidance": "This could indicate an underlying issue in the resource (the resource is not validating). FHIR SME may need to review.",
-    "rule": {
+    "matcher": {
       "field": "DETAILS_TEXT",
       "regex": "^Unable to find a match for profile .* among choices:",
       "inverted": false
@@ -230,7 +230,7 @@
     "severity": "INFORMATION",
     "acceptable": true,
     "guidance": "This could be indicative of a problem if the data element is part of the measure and would not enable the resource to be included in the measure calculation appropriately.",
-    "rule": {
+    "matcher": {
       "field": "DETAILS_TEXT",
       "regex": "^None of the codings provided are in the value set '.*' .*, and a coding is recommended to come from this value set",
       "inverted": false
@@ -242,7 +242,7 @@
     "severity": "WARNING",
     "acceptable": false,
     "guidance": "This could be indicative of a problem if the data element is part of the measure and would not enable the resource to be included in the measure calculation appropriately.",
-    "rule": {
+    "matcher": {
       "field": "DETAILS_TEXT",
       "regex": "^None of the codings provided are in the value set '.*' .*, and a coding should come from this value set unless it has no suitable code \\(note that the validator cannot judge what is suitable\\)",
       "inverted": false
@@ -254,7 +254,7 @@
     "severity": "INFORMATION",
     "acceptable": true,
     "guidance": "This could indicate an underlying issue in the resource (the resource is not validating). FHIR SME may need to review.",
-    "rule": {
+    "matcher": {
       "field": "DETAILS_TEXT",
       "regex": "^Details for .* matching against Profile",
       "inverted": false
@@ -266,7 +266,7 @@
     "severity": "WARNING",
     "acceptable": true,
     "guidance": "This is only for business identifiers. Not important, unless a business identifier, such as MRN is required to be identified.",
-    "rule": {
+    "matcher": {
       "field": "DETAILS_TEXT",
       "regex": "^No code provided, and a code should be provided from the value set '.*' \\(http:\\/\\/hl7\\.org\\/fhir\\/ValueSet\\/identifier-type\\|4\\.0\\.1\\)",
       "inverted": false
@@ -278,7 +278,7 @@
     "severity": "WARNING",
     "acceptable": true,
     "guidance": "No identity or reference for requester (Provider). Safe to ignore when ordering provider is not needed.",
-    "rule": {
+    "matcher": {
       "children": [
         {
           "field": "DETAILS_TEXT",
@@ -301,7 +301,7 @@
     "severity": "WARNING",
     "acceptable": true,
     "guidance": "This is a business identifier with whitespace at the front or back. Not important if business identifiers are not used. May want to have the whitespace trimmed.",
-    "rule": {
+    "matcher": {
       "children": [
         {
           "field": "DETAILS_TEXT",
@@ -324,7 +324,7 @@
     "severity": "ERROR",
     "acceptable": false,
     "guidance": "The MeasureReport violates a business rule regarding MeasureScore. This issue needs to be resolved in the source data, the validator, or explicitely deemed an invalid error.",
-    "rule": {
+    "matcher": {
       "field": "DETAILS_TEXT",
       "regex": "^No measureScore when the scoring of the message is ''cohort''",
       "inverted": false
@@ -336,7 +336,7 @@
     "severity": "WARNING",
     "acceptable": true,
     "guidance": "This is a non-identifier string element with whitespace at the front or back. Not generally important. May want to have the whitespace trimmed.",
-    "rule": {
+    "matcher": {
       "children": [
         {
           "field": "DETAILS_TEXT",
@@ -359,7 +359,7 @@
     "severity": "ERROR",
     "acceptable": true,
     "guidance": "This is likely a secondary issue. If the resource can't validate then it can't be counted as meeting the slicing requirements. Likely addressing the underlying issue will make this issue go away. ",
-    "rule": {
+    "matcher": {
       "field": "DETAILS_TEXT",
       "regex": "^Bundle.entry:.*: minimum required = .*, but only found .* \\(.*\\)",
       "inverted": false
@@ -371,7 +371,7 @@
     "severity": "WARNING",
     "acceptable": false,
     "guidance": "This is an issue with NHSNLink (using an old url) and should be reported in Jira.",
-    "rule": {
+    "matcher": {
       "children": [
         {
           "field": "DETAILS_TEXT",
@@ -399,7 +399,7 @@
     "severity": "WARNING",
     "acceptable": false,
     "guidance": "The code provided is not part of the extensible ValueSet, which if it is a concept that is part of the measure, is a problem that needs to be resolved.",
-    "rule": {
+    "matcher": {
       "children": [
         {
           "field": "DETAILS_TEXT",
@@ -427,7 +427,7 @@
     "severity": "WARNING",
     "acceptable": false,
     "guidance": "No code was provided, which if it is a concept that is part of the measure, is a problem that needs to be resolved.",
-    "rule": {
+    "matcher": {
       "field": "DETAILS_TEXT",
       "regex": "No code provided, and a code should be provided from the value set '.*' \\(.*\\)",
       "inverted": false
@@ -439,7 +439,7 @@
     "severity": "WARNING",
     "acceptable": false,
     "guidance": "This appears to be an issue in the validation process and should be resolved as it may be hiding other issues.",
-    "rule": {
+    "matcher": {
       "children": [
         {
           "field": "DETAILS_TEXT",
@@ -462,7 +462,7 @@
     "severity": "ERROR",
     "acceptable": false,
     "guidance": "Needs investigation, cardinality is not being met based on profile. Reference and review profile to meet profile requirements.",
-    "rule": {
+    "matcher": {
       "field": "DETAILS_TEXT",
       "regex": "minimum required = \\d+, but only found \\d+ \\(from http:\\/\\/www\\.cdc\\.gov\\/nhsn\\/fhirportal\\/dqm\\/ig\\/StructureDefinition\\/.+?\\)",
       "inverted": false
@@ -474,7 +474,7 @@
     "severity": "WARNING",
     "acceptable": true,
     "guidance": "The URL in the validation details is not resolvable. Link may not have the profiles/resources loaded that are represented by the canonical URL.",
-    "rule": {
+    "matcher": {
       "field": "DETAILS_TEXT",
       "regex": "Canonical URL '.*' does not resolve",
       "inverted": false
@@ -486,7 +486,7 @@
     "severity": "ERROR",
     "acceptable": false,
     "guidance": "A date-time format must include the timezone offset for precision. Captured as +/-zzzz.",
-    "rule": {
+    "matcher": {
       "field": "DETAILS_TEXT",
       "regex": "date has a time, it must have a timezone.*",
       "inverted": false

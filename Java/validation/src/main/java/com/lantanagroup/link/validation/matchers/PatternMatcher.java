@@ -1,4 +1,4 @@
-package com.lantanagroup.link.validation.models;
+package com.lantanagroup.link.validation.matchers;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AccessLevel;
@@ -10,7 +10,7 @@ import java.util.regex.Pattern;
 
 @Getter
 @Setter
-public class PatternMatchingCategoryRuleModel extends InvertibleCategoryRuleModel {
+public class PatternMatcher extends InvertibleMatcher {
     private IssueField field;
     private String regex;
 

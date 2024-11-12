@@ -20,7 +20,7 @@
         id bigint identity not null,
         timestamp datetimeoffset(6) not null,
         category_id varchar(255) not null,
-        model varchar(max) not null,
+        matcher varchar(max) not null,
         primary key (id)
     );
 
