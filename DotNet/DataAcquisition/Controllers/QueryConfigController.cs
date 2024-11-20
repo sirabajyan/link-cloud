@@ -97,7 +97,7 @@ public class QueryConfigController : Controller
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<ActionResult<FhirQueryConfiguration>> CreateFhirConfiguration([FromBody] FhirQueryConfiguration? fhirQueryConfiguration, CancellationToken cancellationToken)
+    public async Task<ActionResult<FhirQueryConfiguration>> CreateFhirConfiguration(FhirQueryConfiguration? fhirQueryConfiguration, CancellationToken cancellationToken)
     {
         string? facilityId = fhirQueryConfiguration?.FacilityId;
         try
@@ -179,7 +179,7 @@ public class QueryConfigController : Controller
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<ActionResult> UpdateFhirConfiguration([FromBody] FhirQueryConfiguration? fhirQueryConfiguration, CancellationToken cancellationToken)
+    public async Task<ActionResult> UpdateFhirConfiguration(FhirQueryConfiguration? fhirQueryConfiguration, CancellationToken cancellationToken)
     {
         string? facilityId = fhirQueryConfiguration?.FacilityId;
         try
