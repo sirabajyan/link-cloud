@@ -7,6 +7,7 @@ using Link.Authorization.Policies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Net;
+using System.Security;
 using LantanaGroup.Link.Shared.Application.Services.Security;
 using static LantanaGroup.Link.DataAcquisition.Domain.Settings.DataAcquisitionConstants;
 
@@ -46,6 +47,8 @@ public class QueryConfigController : Controller
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<ActionResult<FhirQueryConfiguration>> GetFhirConfiguration(string facilityId, CancellationToken cancellationToken)
     {
+        facilityId = HtmlInputSanitizer.SanitizeAndRemove(string.IsNullOrEmpty(facilityId) ? string.Empty : facilityId);
+
         try
         {
             if (string.IsNullOrWhiteSpace(facilityId))
