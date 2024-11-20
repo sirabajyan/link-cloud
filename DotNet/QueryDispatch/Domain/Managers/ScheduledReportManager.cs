@@ -127,7 +127,7 @@ namespace QueryDispatch.Domain.Managers
 
                 await _scheduledReportRepository.UpdateAsync(existingReport);
 
-                _logger.LogInformation($"Update scheduled report type {HtmlInputSanitizer.Sanitize(newReportPeriod.ReportType)} for facility id {HtmlInputSanitizer.Sanitize(existingReport.FacilityId)}");
+                _logger.LogInformation($"Update scheduled report type {HtmlInputSanitizer.Sanitize(newReportPeriod.ReportTypes.ToString())} for facility id {HtmlInputSanitizer.Sanitize(existingReport.FacilityId)}");
 
                 var headers = new Headers
                     {

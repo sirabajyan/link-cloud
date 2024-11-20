@@ -1,6 +1,6 @@
-﻿namespace LantanaGroup.Link.Tenant.Models
-using System.Runtime.Serialization;
+﻿using System.Runtime.Serialization;
 
+namespace LantanaGroup.Link.Tenant.Models
 {
     [DataContract]
     public class FacilityConfigDto

@@ -1,4 +1,6 @@
 ﻿using Newtonsoft.Json;
+using QueryDispatch.Application.Models;
+using System.Runtime.Serialization;
 
 namespace LantanaGroup.Link.QueryDispatch.Application.Models
 {

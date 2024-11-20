@@ -1,4 +1,6 @@
-﻿namespace LantanaGroup.Link.QueryDispatch.Application.Models
+﻿using System.Runtime.Serialization;
+
+namespace LantanaGroup.Link.QueryDispatch.Application.Models
 {
     [DataContract]
     public class ScheduledReport

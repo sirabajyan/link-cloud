@@ -19,6 +19,7 @@ using System.Linq.Expressions;
 using Confluent.Kafka;
 using static LantanaGroup.Link.Shared.Application.Extensions.Security.BackendAuthenticationServiceExtension;
 using LantanaGroup.Link.Tenant.Interfaces;
+using LantanaGroup.Link.Shared.Application.Services.Security;
 
 
 namespace LantanaGroup.Link.Tenant.Services
@@ -245,7 +246,7 @@ namespace LantanaGroup.Link.Tenant.Services
                     throw new ApplicationException($"Facility with Id: {facilityId} Not Found");
                 }
             }
-
+           
             try
             {
                 using (ServiceActivitySource.Instance.StartActivity("Delete the Facility Configuration Command"))

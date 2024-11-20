@@ -5,6 +5,7 @@ using Microsoft.Extensions.Options;
 using System.Net;
 using System.Net.Http.Headers;
 using LantanaGroup.Link.Shared.Application.Services.Security;
+using LantanaGroup.Link.Shared.Application.Extensions.Security;
 
 namespace LantanaGroup.Link.Shared.Application.Services;
 
