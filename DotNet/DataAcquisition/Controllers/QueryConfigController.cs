@@ -3,6 +3,7 @@ using LantanaGroup.Link.DataAcquisition.Application.Models.Exceptions;
 using LantanaGroup.Link.DataAcquisition.Application.Repositories;
 using LantanaGroup.Link.DataAcquisition.Domain.Entities;
 using LantanaGroup.Link.Shared.Application.Models.Kafka;
+using LantanaGroup.Link.Shared.Application.Services.Security;
 using Link.Authorization.Policies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -45,6 +46,8 @@ public class QueryConfigController : Controller
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<ActionResult<FhirQueryConfiguration>> GetFhirConfiguration(string facilityId, CancellationToken cancellationToken)
     {
+        facilityId = HtmlInputSanitizer.SanitizeAndRemove(string.IsNullOrEmpty(facilityId) ? string.Empty : facilityId);
+
         try
         {
             if (string.IsNullOrWhiteSpace(facilityId))
@@ -99,15 +102,14 @@ public class QueryConfigController : Controller
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<ActionResult<FhirQueryConfiguration>> CreateFhirConfiguration(FhirQueryConfiguration? fhirQueryConfiguration, CancellationToken cancellationToken)
     {
-        string? facilityId = fhirQueryConfiguration?.FacilityId;
+        string? facilityId = HtmlInputSanitizer.SanitizeAndRemove(fhirQueryConfiguration?.FacilityId ?? string.Empty);
+
         try
         {
             if (fhirQueryConfiguration == null)
             {
                 throw new BadRequestException("fhirQueryConfiguration is null.");
             }
-
-            facilityId = fhirQueryConfiguration.FacilityId;
 
             var existing = await _queryConfigurationManager.GetAsync(facilityId, cancellationToken);
 
@@ -181,7 +183,8 @@ public class QueryConfigController : Controller
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<ActionResult> UpdateFhirConfiguration(FhirQueryConfiguration? fhirQueryConfiguration, CancellationToken cancellationToken)
     {
-        string? facilityId = fhirQueryConfiguration?.FacilityId;
+        string? facilityId = HtmlInputSanitizer.SanitizeAndRemove(fhirQueryConfiguration?.FacilityId ?? string.Empty);
+
         try
         {
             if (fhirQueryConfiguration == null)
@@ -262,6 +265,7 @@ public class QueryConfigController : Controller
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<ActionResult> DeleteFhirConfiguration(string facilityId, CancellationToken cancellationToken)
     {
+        facilityId = HtmlInputSanitizer.SanitizeAndRemove(facilityId);
         try
         {
             if (string.IsNullOrWhiteSpace(facilityId))
