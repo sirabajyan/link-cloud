@@ -1,0 +1,32 @@
+<form [formGroup]="patientForm">
+  <div class="input-container">
+    <mat-form-field class="form-input" appearance="outline">
+      <mat-label>Facility</mat-label>
+      <input matInput formControlName="facilityId">
+      <mat-error *ngIf="facilityIdControl.hasError('required')">
+        Facility is <strong>required</strong>
+      </mat-error>
+    </mat-form-field>
+  </div>
+  <mat-form-field appearance="outline">
+    <mat-label>Enter Patient</mat-label>
+    <input matInput formControlName="patient" placeholder="Enter patient" />
+  </mat-form-field>
+  <div class="input-container">
+    <ul>
+      <li *ngFor="let patient of patients; let i = index">
+        {{ patient }}
+        <button mat-icon-button color="warn" *ngIf="patients.length > 1" (click)="removePatient(i)">
+          <mat-icon>remove_circle</mat-icon>
+        </button>
+      </li>
+    </ul>
+  </div>
+  <button mat-raised-button color="primary" type="button" (click)="addPatient()">Add Another Patient</button>
+</form>
+<div class="form-bar">
+  <button mat-raised-button color="primary" [disabled]="patientForm.invalid || patients.length < 1" (click)="generateEvent()">
+    <mat-icon>event</mat-icon>
+    Generate Event
+  </button>
+</div>

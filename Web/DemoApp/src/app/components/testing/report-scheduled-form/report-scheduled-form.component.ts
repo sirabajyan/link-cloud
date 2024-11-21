@@ -41,15 +41,15 @@ import { TestService } from '../../../services/gateway/testing.service';
 export class ReportScheduledFormComponent implements OnInit {
   @Output() eventGenerated = new EventEmitter<string>();
 
-  eventRequestedForm!: FormGroup;  
+  eventRequestedForm!: FormGroup;
   reportTypes: string[] = [ReportType.HYPO, ReportType.CDIHOB];
 
   constructor(private testService: TestService, private snackBar: MatSnackBar) { }
 
   ngOnInit(): void {
     this.eventRequestedForm = new FormGroup({
-      facilityId: new FormControl('', Validators.required),
-      reportType: new FormControl('', Validators.required),
+      facilityId: new FormControl('MyFacility', Validators.required),
+      selectedReportTypes: new FormControl([], Validators.required),
       startDate: new FormControl('', Validators.required),
       endDate: new FormControl('', Validators.required)
     });
@@ -60,7 +60,7 @@ export class ReportScheduledFormComponent implements OnInit {
   }
 
   get reportTypeControl(): FormControl {
-    return this.eventRequestedForm.get('reportType') as FormControl;
+    return this.eventRequestedForm.get('selectedReportTypes') as FormControl;
   }
 
   get startDateControl(): FormArray {
@@ -70,7 +70,7 @@ export class ReportScheduledFormComponent implements OnInit {
   get endDateControl(): FormArray {
     return this.eventRequestedForm.get('endDate') as FormArray;
   }
-  
+
   compareReportTypes(object1: any, object2: any) {
     return (object1 && object2) && object1 === object2;
   }
@@ -80,8 +80,8 @@ export class ReportScheduledFormComponent implements OnInit {
 
       let event: IReportScheduled = this.eventRequestedForm.value;
       event.facilityId = this.facilityIdControl.value;
-
-      this.testService.generateReportScheduledEvent(event.facilityId, event.reportType, event.startDate, event.endDate).subscribe(data => {
+      event.reportTypes =   this.reportTypeControl.value;
+      this.testService.generateReportScheduledEvent(event.facilityId, event.reportTypes, event.startDate, event.endDate).subscribe(data => {
         if (data) {
 
           this.eventGenerated.emit(data.id);

@@ -6,18 +6,61 @@
 
   <mat-card class="resource-card">
     <mat-card-content>
-      <button mat-raised-button color="primary"  (click)="createConsumers()">
-        <mat-icon>event</mat-icon>
-        Create Consumers
-      </button>
+      <mat-card-actions class="button-container">
+        <button mat-raised-button color="primary" (click)="createConsumers()">
+          <mat-icon>event</mat-icon>
+          Create Consumers
+        </button>
+        <button mat-raised-button color="primary" (click)="deleteConsumers()">
+          <mat-icon>event</mat-icon>
+          Delete Consumers
+        </button>
+      </mat-card-actions>
     </mat-card-content>
   </mat-card>
 
   <mat-card class="resource-card">
     <mat-card-content>
-      <div *ngFor="let key of getKeys(consumersData)">
-        <p>{{ key }}: {{ consumersData[key] }}</p>
+     <!-- <div *ngFor="let key of getKeys(consumersData)">
+        <div [style.color]="key.includes('Error') ? 'red' : 'black'">
+          {{ key }}
+        </div>
+        <div [style.color]="key.includes('Error') ? 'red' : 'black'">
+          {{ consumersData[key] }}
+        </div>
+      </div>-->
+      <!--<div *ngFor="let entry of consumersData | keyvalue">
+        <div [style.color]="entry.key.includes('Error') ? 'red' : 'black'">{{ entry.key }}:</div> {{ entry.value }}
+      </div>-->
+
+      <div class="table-container">
+        <h2>Event Data</h2>
+        <table class="table">
+          <thead>
+          <tr>
+            <th>Topic</th>
+            <th>Correlation IDs</th>
+          </tr>
+          </thead>
+          <tbody>
+          <tr *ngFor="let entry of consumersDataOutput | keyvalue">
+            <td [style.color]="entry.key.includes('Error') ? 'red' : 'black'">{{ entry.key }}:</td>
+            <td>
+              <ul>
+                <div *ngFor="let item of entry.value">{{ item }}</div>
+              </ul>
+            </td>
+          </tr>
+          </tbody>
+        </table>
       </div>
+
+     <!-- <div *ngFor="let entry of consumersDataOutput | keyvalue">
+        <div [style.color]="entry.key.includes('Error') ? 'red' : 'black'">{{ entry.key }}:</div>
+        <div>
+          <div *ngFor="let item of entry.value">{{ item }}</div>
+        </div>
+      </div>-->
     </mat-card-content>
   </mat-card>
 
@@ -45,11 +88,11 @@
       <app-report-scheduled-form (eventGenerated)="onEventGenerated($event)" *ngIf="showReportScheduledForm"></app-report-scheduled-form>
       <app-patient-event-form (eventGenerated)="onEventGenerated($event)" *ngIf="showPatientEventForm"></app-patient-event-form>
       <app-data-acquisition-reqeusted-form (eventGenerated)="onEventGenerated($event)" *ngIf="showDataAcquisitionRequestedForm"></app-data-acquisition-reqeusted-form>
-
+      <app-patient-acquired-form   (eventGenerated)="onEventGenerated($event)" *ngIf="showPatientsAcquiredForm"></app-patient-acquired-form>
     </mat-card-content>
   </mat-card>
 
-  <mat-card class="process-card" *ngIf="showProcessCard">
+  <!--<mat-card class="process-card" *ngIf="showProcessCard">
     <mat-card-header>
       Monitoring audit events for correlation id  '{{correlationId}}' &nbsp;&nbsp;<mat-spinner [diameter]="20" *ngIf="isMonitoring"></mat-spinner>
       <button mat-mini-fab color="warn" (click)="stopPollingAuditEvents()" style="margin-left: auto;" title="Stop Monitoring">
@@ -64,6 +107,6 @@
       </mat-card>
 
     </mat-card-content>
-  </mat-card>
+  </mat-card>-->
 
 </div>

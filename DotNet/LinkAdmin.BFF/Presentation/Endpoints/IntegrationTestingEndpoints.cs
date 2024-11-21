@@ -16,16 +16,18 @@ namespace LantanaGroup.Link.LinkAdmin.BFF.Presentation.Endpoints
     {
         private readonly ILogger<IntegrationTestingEndpoints> _logger;
         private readonly ICreatePatientEvent _createPatientEvent;
+        private readonly ICreatePatientAcquired _createPatientAcquired;
         private readonly ICreateReportScheduled _createReportScheduled;
         private readonly ICreateDataAcquisitionRequested _createDataAcquisitionRequested;
         private readonly KafkaConsumerManager _kafkaConsumerManager;
 
-        public IntegrationTestingEndpoints(ILogger<IntegrationTestingEndpoints> logger, ICreatePatientEvent createPatientEvent, KafkaConsumerManager kafkaConsumerManager, ICreateReportScheduled createReportScheduled, ICreateDataAcquisitionRequested createDataAcquisitionRequested)
+        public IntegrationTestingEndpoints(ILogger<IntegrationTestingEndpoints> logger, ICreatePatientEvent createPatientEvent, KafkaConsumerManager kafkaConsumerManager, ICreateReportScheduled createReportScheduled, ICreateDataAcquisitionRequested createDataAcquisitionRequested, ICreatePatientAcquired createPatientAcquired)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _createPatientEvent = createPatientEvent ?? throw new ArgumentNullException(nameof(createPatientEvent));
             _createReportScheduled = createReportScheduled ?? throw new ArgumentNullException(nameof(createReportScheduled));
             _createDataAcquisitionRequested = createDataAcquisitionRequested ?? throw new ArgumentNullException(nameof(createDataAcquisitionRequested));
+            _createPatientAcquired = createPatientAcquired ?? throw new ArgumentNullException(nameof(createPatientAcquired));
             _kafkaConsumerManager = kafkaConsumerManager ?? throw new ArgumentNullException(nameof(kafkaConsumerManager));
         }
 
@@ -75,6 +77,18 @@ namespace LantanaGroup.Link.LinkAdmin.BFF.Presentation.Endpoints
                     Summary = "Integration Testing - Produce Data Acquisition Requested Event",
                     Description = "Produces a new data acquisition requested event that will be sent to the broker. Allows for testing processes outside of scheduled events."
                 });
+
+            integrationEndpoints.MapPost("/patient-acquired", CreatePatientAcquired)
+               .Produces<EventProducerResponse>(StatusCodes.Status200OK)
+               .Produces<ValidationFailureResponse>(StatusCodes.Status400BadRequest)
+               .Produces(StatusCodes.Status401Unauthorized)
+               .ProducesProblem(StatusCodes.Status500InternalServerError)
+               .WithOpenApi(x => new OpenApiOperation(x)
+               {
+                   Summary = "Integration Testing - Produce Data Acquisition Requested Event",
+                   Description = "Produces a new data acquisition requested event that will be sent to the broker. Allows for testing processes outside of scheduled events."
+               });
+
 
             integrationEndpoints.MapPost("/start-consumers", CreateConsumersRequested)
                .Produces<EventProducerResponse>(StatusCodes.Status200OK)
@@ -139,6 +153,18 @@ namespace LantanaGroup.Link.LinkAdmin.BFF.Presentation.Endpoints
             return Task.CompletedTask;
         }
 
+        public async Task<IResult> CreatePatientAcquired(HttpContext context, PatientAcquired model)
+        {
+            var user = context.User;
+
+            var correlationId = await _createPatientAcquired.Execute(model, user?.FindFirst(ClaimTypes.Email)?.Value);
+            return Results.Ok(new EventProducerResponse
+            {
+                Id = correlationId,
+                Message = $"The patient acquired was created succcessfully with a correlation id of '{correlationId}'."
+            });
+        }
+
 
         public async Task<IResult> CreatePatientEvent(HttpContext context, PatientEvent model)
         {
@@ -151,7 +177,6 @@ namespace LantanaGroup.Link.LinkAdmin.BFF.Presentation.Endpoints
                 Message = $"The patient event was created succcessfully with a correlation id of '{correlationId}'."
             });
         }
-
         public async Task<IResult> CreateReportScheduled(HttpContext context, ReportScheduled model)
         {
             var user = context.User;

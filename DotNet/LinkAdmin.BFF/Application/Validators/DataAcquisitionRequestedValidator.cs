@@ -35,9 +35,9 @@ namespace LantanaGroup.Link.LinkAdmin.BFF.Application.Validators
     {
         public ScheduledReportValidator()
         {
-            RuleFor(x => x.ReportType)
+            RuleFor(x => x.ReportTypes)
                 .NotEmpty()
-                    .WithMessage("ReportType is required");
+                    .WithMessage("ReportTypes is required");
 
             RuleFor(x => x.StartDate)
                 .NotEmpty()

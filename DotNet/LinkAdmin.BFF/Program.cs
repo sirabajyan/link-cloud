@@ -114,8 +114,9 @@ static void RegisterServices(WebApplicationBuilder builder)
 
     // Add commands
     builder.Services.AddTransient<ICreatePatientEvent, CreatePatientEvent>();
+    builder.Services.AddTransient<ICreatePatientAcquired, CreatePatientAcquired>();
     builder.Services.AddTransient<ICreateReportScheduled, CreateReportScheduled>();
-    builder.Services.AddTransient<ICreateDataAcquisitionRequested, CreateDataAcquisitionRequested>();
+    builder.Services.AddTransient<ICreateDataAcquisitionRequested, CreatePatientAcquisition>();
     builder.Services.AddTransient<ICreateLinkBearerToken, CreateLinkBearerToken>();
     builder.Services.AddTransient<IRefreshSigningKey, RefreshSigningKey>();
     builder.Services.AddTransient<IGetLinkAccount, GetLinkAccount>();

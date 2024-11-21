@@ -21,6 +21,7 @@ import { DataAcquisitionReqeustedFormComponent } from '../data-acquisition-reqeu
 import { PatientEventFormComponent } from '../patient-event-form/patient-event-form.component';
 import { animate, query, stagger, style, transition, trigger } from '@angular/animations';
 import { ReportScheduledFormComponent } from '../report-scheduled-form/report-scheduled-form.component';
+import {PatientAcquiredFormComponent} from "../patient-acquired-form/patient-acquired-form.component";
 
 const listAnimation = trigger('listAnimation', [
   transition('* <=> *', [
@@ -55,7 +56,8 @@ const listAnimation = trigger('listAnimation', [
     MatProgressSpinnerModule,
     PatientEventFormComponent,
     DataAcquisitionReqeustedFormComponent,
-    ReportScheduledFormComponent
+    ReportScheduledFormComponent,
+    PatientAcquiredFormComponent
   ],
   templateUrl: './integration-test.component.html',
   styleUrls: ['./integration-test.component.scss'],
@@ -63,10 +65,11 @@ const listAnimation = trigger('listAnimation', [
 })
 export class IntegrationTestComponent implements OnInit, OnDestroy {
   eventForm!: FormGroup;
-  events: string[] = [EventType.REPORT_SCHEDULED, EventType.PATIENT_EVENT, EventType.DATA_ACQUISITION_REQUESTED];
+  events: string[] = [EventType.REPORT_SCHEDULED, EventType.PATIENT_EVENT, EventType.DATA_ACQUISITION_REQUESTED, EventType.PATIENT_ACQUIRED];
   showReportScheduledForm: boolean = false;
   showPatientEventForm: boolean = false;
   showDataAcquisitionRequestedForm: boolean = false;
+  showPatientsAcquiredForm: boolean = false;
 
   correlationId: string = '';
   auditEvents: AuditModel[] = [];
@@ -74,12 +77,19 @@ export class IntegrationTestComponent implements OnInit, OnDestroy {
   intervalId!: NodeJS.Timer | null;
   isMonitoring: boolean = false;
   showProcessCard: boolean = false;
-  consumersData: { [key: string]: string } = {};
+  //consumersData: { [key: string]: string } = {};
+  consumersData:  Map<string, string> = new Map();
+ /* consumersData: Map<string, string> = new Map([
+    ['consumer1', 'value1,value2'],
+    ['consumer2', 'value11,value22'],
+    ['consumer3', 'value111,value222']
+  ]);*/
+  consumersDataOutput:  Map<string,  string[]> = new Map();
 
   constructor(private auditService: AuditService, private testService: TestService, private snackBar: MatSnackBar) { }
 
   ngOnDestroy(): void {
-    this.stopPollingAuditEvents();
+    this.stopPollingConsumerEvents();
   }
 
   ngOnInit(): void {
@@ -93,24 +103,35 @@ export class IntegrationTestComponent implements OnInit, OnDestroy {
           this.showReportScheduledForm = true;
           this.showPatientEventForm = false;
           this.showDataAcquisitionRequestedForm = false;
+          this.showPatientsAcquiredForm = false;
           break;
         }
         case ('PatientEvent'): {
           this.showReportScheduledForm = false;
           this.showPatientEventForm = true;
           this.showDataAcquisitionRequestedForm = false;
+          this.showPatientsAcquiredForm = false;
           break;
         }
         case ('DataAcquisitionRequested'): {
           this.showReportScheduledForm = false;
+          this.showPatientsAcquiredForm = false;
           this.showPatientEventForm = false;
           this.showDataAcquisitionRequestedForm = true;
+          break;
+        }
+        case ('PatientsAcquired'): {
+          this.showReportScheduledForm = false;
+          this.showPatientEventForm = false;
+          this.showDataAcquisitionRequestedForm = false;
+          this.showPatientsAcquiredForm = true;
           break;
         }
         default: {
           this.showReportScheduledForm = false;
           this.showPatientEventForm = false;
           this.showDataAcquisitionRequestedForm = false;
+          this.showPatientsAcquiredForm = false;
           break;
         }
       }
@@ -128,7 +149,7 @@ export class IntegrationTestComponent implements OnInit, OnDestroy {
   onEventGenerated(id: string) {
     this.correlationId = id;
     this.showProcessCard = true;
-    this.startPollingAuditEvents();
+    //this.startPollingAuditEvents();
   }
 
   createConsumers() {
@@ -140,8 +161,82 @@ export class IntegrationTestComponent implements OnInit, OnDestroy {
     });
   }
 
+  deleteConsumers() {
+    this.testService.stopConsumers().subscribe(response => {
+      console.log('Consumer created successfully:', response);
+      this.stopPollingConsumerEvents();
+    }, error => {
+      console.error('Error creating consumer:', error);
+    });
+  }
 
-  startPollingAuditEvents() {
+
+  startPollingConsumerEvents() {
+    if(!this.intervalId) {
+      this.intervalId = setInterval(this.pollConsumerEvents.bind(this), 10000); // 10 seconds in milliseconds (1000 ms = 1 second)
+    }
+  }
+
+  stopPollingConsumerEvents() {
+    if (this.intervalId) {
+      clearInterval(this.intervalId);
+      this.intervalId = null;
+      this.isMonitoring = false;
+
+      this.snackBar.open('Stopped polling consumer events', '', {
+        duration: 3500,
+        panelClass: 'info-snackbar',
+        horizontalPosition: 'end',
+        verticalPosition: 'top'
+      });
+    }
+  }
+
+
+  getKeys(consumersData: { [key: string]: string }): string[] {
+    return Object.keys(consumersData);
+  }
+
+
+  pollConsumerEvents(){
+    this.testService.readConsumers().subscribe(data => {
+      this.consumersData = new Map(Object.entries(data));
+      this.consumersData.forEach((value, key) => {
+        // Example transformation: split the string into an array
+        let test = JSON.parse(value);
+        this.consumersDataOutput.set(key, test);
+      });
+
+    });
+  }
+ /* pollAuditEvents() {
+    this.auditService.list('', '', this.correlationId, '', '', '', '', 20, 1).subscribe(data => {
+      this.auditEvents = data.records;
+      this.paginationMetadata = data.metadata;
+
+      /!** Testing Only *!/
+      //let testAudit: AuditModel = {
+      //  "id": this.correlationId,
+      //  "facilityId": 'FACILITY_ORG_10001',
+      //  "correlationId": this.correlationId,
+      //  "serviceName": "Some Service",
+      //  "eventDate": new Date().toUTCString(),
+      //  "user": "SystemUser",
+      //  "action": "Create",
+      //  "resource": "SomeEntity",
+      //  "propertyChanges": [],
+      //  "notes": "New notification (4c05b712-0b8b-4c9a-83ab-0999120a442e) created for ''."
+      //};
+
+      //this.auditEvents.push(testAudit);
+
+    });
+
+  }*/
+
+
+
+  /*startPollingAuditEvents() {
     if (this.auditEvents && this.auditEvents.length > 0) {
       this.auditEvents.splice(0, this.auditEvents.length);
     }
@@ -170,45 +265,6 @@ export class IntegrationTestComponent implements OnInit, OnDestroy {
         verticalPosition: 'top'
       });
     }
-  }
-
-  startPollingConsumerEvents() {
-    this.intervalId = setInterval( this.pollConsumerEvents.bind(this), 10000); // 10 seconds in milliseconds (1000 ms = 1 second)
-  }
-
-  getKeys(consumersData: { [key: string]: string }): string[] {
-    return Object.keys(consumersData);
-  }
-
-
-  pollConsumerEvents(){
-    this.testService.readConsumers().subscribe(data => {
-      this.consumersData = data;
-    });
-  }
-  pollAuditEvents() {
-    this.auditService.list('', '', this.correlationId, '', '', '', '', 20, 1).subscribe(data => {
-      this.auditEvents = data.records;
-      this.paginationMetadata = data.metadata;
-
-      /** Testing Only */
-      //let testAudit: AuditModel = {
-      //  "id": this.correlationId,
-      //  "facilityId": 'FACILITY_ORG_10001',
-      //  "correlationId": this.correlationId,
-      //  "serviceName": "Some Service",
-      //  "eventDate": new Date().toUTCString(),
-      //  "user": "SystemUser",
-      //  "action": "Create",
-      //  "resource": "SomeEntity",
-      //  "propertyChanges": [],
-      //  "notes": "New notification (4c05b712-0b8b-4c9a-83ab-0999120a442e) created for ''."
-      //};
-
-      //this.auditEvents.push(testAudit);
-
-    });
-
-  }
+  }*/
 
 }

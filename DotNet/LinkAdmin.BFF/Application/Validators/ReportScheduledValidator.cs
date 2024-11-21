@@ -11,7 +11,7 @@ namespace LantanaGroup.Link.LinkAdmin.BFF.Application.Validators
                 .NotEmpty()
                     .WithMessage("FacilityId is required");
 
-            RuleFor(x => x.ReportType)
+            RuleFor(x => x.ReportTypes)
                 .NotEmpty()
                     .WithMessage("ReportType is required");
 

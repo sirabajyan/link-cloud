@@ -3,7 +3,7 @@
     public interface IReportScheduled
     {        
         string FacilityId { get; set; }        
-        string ReportType { get; set; }        
+        List<string> ReportTypes { get; set; }        
         DateTime? StartDate { get; set; }        
         DateTime? EndDate { get; set; }
     }

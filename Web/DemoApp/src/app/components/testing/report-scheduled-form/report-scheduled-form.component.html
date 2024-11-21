@@ -11,7 +11,7 @@
   <div class="input-container">
     <mat-form-field class="form-select" appearance="outline">
       <mat-label>Report Type</mat-label>
-      <mat-select formControlName="reportType" [compareWith]="compareReportTypes">
+      <mat-select formControlName="selectedReportTypes" [compareWith]="compareReportTypes"  multiple>
         <mat-option>None</mat-option>
         <mat-option *ngFor="let type of reportTypes" [value]="type">
           {{type}}

@@ -14,7 +14,7 @@ namespace LantanaGroup.Link.LinkAdmin.BFF.Application.Models.Integration
         /// The type of measure report to be generated
         /// </summary>
         /// <example>NHSNGlycemicControlHypoglycemicInitialPopulation</example>
-        public string ReportType { get; set; } = string.Empty;
+        public List<string> ReportTypes { get; set; } = [];
 
         /// <summary>
         /// The start date for the report period
@@ -31,13 +31,17 @@ namespace LantanaGroup.Link.LinkAdmin.BFF.Application.Models.Integration
 
     public class ReportScheduledMessage
     {
-        public List<KeyValuePair<string, object>>? Parameters { get; set; }
+       //public List<KeyValuePair<string, object>>? Parameters { get; set; }
+        public List<string> ReportTypes { get; set; } = [];
+        public DateTime? StartDate { get; set; }
+        public DateTime? EndDate { get; set; }
+        public string Frequency { get; set; } = string.Empty;
     }
 
     public class ReportScheduledKey
     {
         public string? FacilityId { get; set; }
-        public string? ReportType { get; set; }
+       // public string? ReportType { get; set; }
 
         public static implicit operator string(ReportScheduledKey v)
         {
@@ -51,7 +55,7 @@ namespace LantanaGroup.Link.LinkAdmin.BFF.Application.Models.Integration
         /// The type of measure report to be generated
         /// </summary>
         /// <example>NHSNdQMAcuteCareHospitalInitialPopulation</example>
-        public string ReportType { get; set; } = string.Empty;
+        public List<string> ReportTypes { get; set; } = [];
 
         /// <summary>
         /// The start date for the reporting period
