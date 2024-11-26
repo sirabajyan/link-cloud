@@ -65,7 +65,7 @@ namespace LantanaGroup.Link.LinkAdmin.BFF.Application.Commands.Integration
                 {
                     using var scope = _serviceScopeFactory.CreateScope();
                     var _cache = scope.ServiceProvider.GetRequiredService<IDistributedCache>();
-                    String key = topic.Item2 + " - CorrelationId";
+                    String key = topic.Item2;
                     _cache.Remove(key);
                 }
             }
@@ -114,7 +114,7 @@ namespace LantanaGroup.Link.LinkAdmin.BFF.Application.Commands.Integration
                 {
                     if (topic.Item2 != "")
                     {
-                        string key = topic.Item2 + " - CorrelationId";
+                        string key = topic.Item2;
 
                         correlationIds.Add(key, _cache.GetString(key));
 

@@ -20,13 +20,6 @@ namespace LantanaGroup.Link.LinkAdmin.BFF.Application.Commands.Integration
 
         public void StartConsumer(string groupId, string topic, IConsumer<Ignore, string> consumer, CancellationToken cancellationToken)
         {
-           /* var config = new ConsumerConfig
-            {
-                GroupId = groupId,
-                BootstrapServers = "localhost:9092",  // Replace with your Kafka server address
-                AutoOffsetReset = AutoOffsetReset.Earliest
-            };
-*/
             using (consumer)
             {
                 consumer.Subscribe(topic);
@@ -44,10 +37,9 @@ namespace LantanaGroup.Link.LinkAdmin.BFF.Application.Commands.Integration
                             if (_cacheSettings.Value.Enabled) { 
                                 using var scope = _serviceScopeFactory.CreateScope();
                                 var _cache = scope.ServiceProvider.GetRequiredService<IDistributedCache>();
-                                String key = topic + " - CorrelationId";
                                 // append the new correlation id to the existing list
                                 var retrievedList = new List<string>();
-                                string retrievedListJson = _cache.GetString(key);
+                                string retrievedListJson = _cache.GetString(topic);
                                 if (retrievedListJson != null) {
                                     retrievedList = JsonConvert.DeserializeObject<List<string>>(retrievedListJson);
                                 }
@@ -58,7 +50,7 @@ namespace LantanaGroup.Link.LinkAdmin.BFF.Application.Commands.Integration
 
                                 string serializedList = JsonConvert.SerializeObject(retrievedList);
 
-                                _cache.SetString(key, serializedList);
+                                _cache.SetString(topic, serializedList);
                             }
                         }
                         Console.WriteLine($"Consumed message '{consumeResult.Message.Value}' from topic {consumeResult.Topic}, partition {consumeResult.Partition}, offset {consumeResult.Offset}, correlation {correlationId}");
