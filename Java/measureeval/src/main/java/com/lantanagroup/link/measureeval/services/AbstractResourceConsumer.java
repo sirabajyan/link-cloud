@@ -16,6 +16,7 @@ import com.lantanagroup.link.measureeval.repositories.AbstractResourceRepository
 import com.lantanagroup.link.measureeval.repositories.PatientReportingEvaluationStatusRepository;
 import io.opentelemetry.api.common.Attributes;
 import io.opentelemetry.api.trace.Span;
+import org.apache.commons.text.StringEscapeUtils;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.header.internals.RecordHeaders;
@@ -69,16 +70,17 @@ public abstract class AbstractResourceConsumer<T extends AbstractResourceRecord>
         this.measureEvalMetrics = measureEvalMetrics;
     }
 
-    protected void doConsume (String correlationId, ConsumerRecord<String, T> record) {
+    protected void doConsume (String correlationIdInput, ConsumerRecord<String, T> record) {
 
         Span currentSpan = Span.current();
         MDC.put("traceId", currentSpan.getSpanContext().getTraceId());
         MDC.put("spanId", currentSpan.getSpanContext().getSpanId());
 
+        String correlationId = StringEscapeUtils.escapeJava(correlationIdInput);
         Attributes attributes = Attributes.builder().put(stringKey("correlationId"), correlationId).build();
         measureEvalMetrics.IncrementRecordsReceivedCounter(attributes);
 
-        String facilityId = record.key();
+        String facilityId = StringEscapeUtils.escapeJava(record.key());
 
         if (facilityId == null || facilityId.isEmpty()) {
             logger.error("Facility ID is null or empty. Exiting.");
@@ -108,6 +110,7 @@ public abstract class AbstractResourceConsumer<T extends AbstractResourceRecord>
             if (logger.isInfoEnabled()) {
                 logger.info("Consuming record: RECORD=[{}] FACILITY=[{}] CORRELATION=[{}] ACQUISITION COMPLETE=[{}]", KafkaUtils.format(record), facilityId, correlationId, value.isAcquisitionComplete());
             }
+
             PatientReportingEvaluationStatus patientStatus = Objects.requireNonNullElseGet(retrievePatientStatus(facilityId, correlationId), () -> createPatientStatus(facilityId, correlationId, value));
             Bundle bundle = createBundle(patientStatus);
             evaluateMeasures(value, patientStatus, bundle);
