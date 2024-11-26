@@ -23,6 +23,20 @@
     </mat-form-field>
   </div>
   <div class="input-container">
+    <mat-form-field class="form-select" appearance="outline">
+      <mat-label>Frequency</mat-label>
+      <mat-select formControlName="selectedFrequency">
+        <mat-option>None</mat-option>
+        <mat-option *ngFor="let frequency of frequencies" [value]="frequency">
+          {{frequency}}
+        </mat-option>
+      </mat-select>
+      <mat-error *ngIf="facilityControl.hasError('required')">
+        Report Type is <strong>required</strong>
+      </mat-error>
+    </mat-form-field>
+  </div>
+  <div class="input-container">
     <mat-form-field class="form-input" appearance="outline">
       <mat-label>Start Date</mat-label>
       <input matInput formControlName="startDate" [matDatepicker]="startDatePicker">
@@ -36,6 +50,16 @@
   </div>
   <div class="input-container">
     <mat-form-field class="form-input" appearance="outline">
+      <mat-label>Delay</mat-label>
+      <input matInput formControlName="delay" >
+      <mat-error *ngIf="delayControl.hasError('required')">
+        Delay is <strong>required</strong>
+      </mat-error>
+    </mat-form-field>
+  </div>
+
+  <!--<div class="input-container">
+    <mat-form-field class="form-input" appearance="outline">
       <mat-label>End Date</mat-label>
       <input matInput formControlName="endDate" [matDatepicker]="endDatePicker">
       <mat-hint>MM/DD/YYYY</mat-hint>
@@ -45,7 +69,7 @@
         Report End Date is <strong>required</strong>
       </mat-error>
     </mat-form-field>
-  </div>
+  </div>-->
 </form>
 
 <div class="form-bar">

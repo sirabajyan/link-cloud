@@ -21,20 +21,7 @@
 
   <mat-card class="resource-card">
     <mat-card-content>
-     <!-- <div *ngFor="let key of getKeys(consumersData)">
-        <div [style.color]="key.includes('Error') ? 'red' : 'black'">
-          {{ key }}
-        </div>
-        <div [style.color]="key.includes('Error') ? 'red' : 'black'">
-          {{ consumersData[key] }}
-        </div>
-      </div>-->
-      <!--<div *ngFor="let entry of consumersData | keyvalue">
-        <div [style.color]="entry.key.includes('Error') ? 'red' : 'black'">{{ entry.key }}:</div> {{ entry.value }}
-      </div>-->
-
       <div class="table-container">
-        <h2>Event Data</h2>
         <table class="table">
           <thead>
           <tr>
@@ -54,13 +41,6 @@
           </tbody>
         </table>
       </div>
-
-     <!-- <div *ngFor="let entry of consumersDataOutput | keyvalue">
-        <div [style.color]="entry.key.includes('Error') ? 'red' : 'black'">{{ entry.key }}:</div>
-        <div>
-          <div *ngFor="let item of entry.value">{{ item }}</div>
-        </div>
-      </div>-->
     </mat-card-content>
   </mat-card>
 
@@ -91,22 +71,5 @@
       <app-patient-acquired-form   (eventGenerated)="onEventGenerated($event)" *ngIf="showPatientsAcquiredForm"></app-patient-acquired-form>
     </mat-card-content>
   </mat-card>
-
-  <!--<mat-card class="process-card" *ngIf="showProcessCard">
-    <mat-card-header>
-      Monitoring audit events for correlation id  '{{correlationId}}' &nbsp;&nbsp;<mat-spinner [diameter]="20" *ngIf="isMonitoring"></mat-spinner>
-      <button mat-mini-fab color="warn" (click)="stopPollingAuditEvents()" style="margin-left: auto;" title="Stop Monitoring">
-        <mat-icon>stop</mat-icon>
-      </button>
-    </mat-card-header>
-    <mat-card-content [@listAnimation]="auditEvents.length">
-      <mat-card class="process-card" *ngFor="let audit of auditEvents">
-        <mat-card-content>
-          <pre>{{ audit | json }}</pre>
-        </mat-card-content>
-      </mat-card>
-
-    </mat-card-content>
-  </mat-card>-->
 
 </div>

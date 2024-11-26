@@ -77,13 +77,8 @@ export class IntegrationTestComponent implements OnInit, OnDestroy {
   intervalId!: NodeJS.Timer | null;
   isMonitoring: boolean = false;
   showProcessCard: boolean = false;
-  //consumersData: { [key: string]: string } = {};
   consumersData:  Map<string, string> = new Map();
- /* consumersData: Map<string, string> = new Map([
-    ['consumer1', 'value1,value2'],
-    ['consumer2', 'value11,value22'],
-    ['consumer3', 'value111,value222']
-  ]);*/
+
   consumersDataOutput:  Map<string,  string[]> = new Map();
 
   constructor(private auditService: AuditService, private testService: TestService, private snackBar: MatSnackBar) { }
