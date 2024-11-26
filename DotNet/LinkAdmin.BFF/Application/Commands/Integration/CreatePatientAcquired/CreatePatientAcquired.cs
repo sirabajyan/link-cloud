@@ -11,10 +11,10 @@ namespace LantanaGroup.Link.LinkAdmin.BFF.Application.Commands.Integration
 {
     public class CreatePatientAcquired : ICreatePatientAcquired
     {
-        private readonly ILogger<CreatePatientAcquisition> _logger;
+        private readonly ILogger<CreatePatientAcquired> _logger;
         private readonly IProducer<string, object> _producer;
 
-        public CreatePatientAcquired(ILogger<CreatePatientAcquisition> logger, IProducer<string, object> producer)
+        public CreatePatientAcquired(ILogger<CreatePatientAcquired> logger, IProducer<string, object> producer)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _producer = producer ?? throw new ArgumentNullException(nameof(producer));

@@ -8,12 +8,12 @@ using System.Diagnostics;
 
 namespace LantanaGroup.Link.LinkAdmin.BFF.Application.Commands.Integration
 {
-    public class CreatePatientAcquisition : ICreateDataAcquisitionRequested
+    public class CreateDataAcquisitionRequested : ICreateDataAcquisitionRequested
     {
-        private readonly ILogger<CreatePatientAcquisition> _logger;
+        private readonly ILogger<CreateDataAcquisitionRequested> _logger;
         private readonly IProducer<string, object> _producer;
 
-        public CreatePatientAcquisition(ILogger<CreatePatientAcquisition> logger, IProducer<string, object> producer)
+        public CreateDataAcquisitionRequested(ILogger<CreateDataAcquisitionRequested> logger, IProducer<string, object> producer)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _producer = producer ?? throw new ArgumentNullException(nameof(producer));
