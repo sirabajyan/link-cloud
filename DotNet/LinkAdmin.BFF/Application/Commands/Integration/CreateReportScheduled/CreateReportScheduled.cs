@@ -33,7 +33,18 @@ namespace LantanaGroup.Link.LinkAdmin.BFF.Application.Commands.Integration
                 };
 
                 string Key = model.FacilityId;
-                DateTime EndDate = DateTime.UtcNow.AddMinutes(2);
+
+                DateTime EndDate = DateTime.UtcNow;
+
+                if (double.TryParse(model.Delay, out double delay))
+                {
+                   EndDate = DateTime.UtcNow.AddMinutes(delay);
+                }
+                else
+                {
+                   EndDate = DateTime.UtcNow.AddMinutes(5); // default to 5 minutes
+                }
+               
                 DateTime EndDate1 = new DateTime(EndDate.Year, EndDate.Month, EndDate.Day, EndDate.Hour, EndDate.Minute, 0, DateTimeKind.Utc);
                 var message = new Message<string, object>
                 {
@@ -42,9 +53,8 @@ namespace LantanaGroup.Link.LinkAdmin.BFF.Application.Commands.Integration
                     Value = new ReportScheduledMessage()
                     {
                         ReportTypes = model.ReportTypes,
-                        Frequency = "Monthly",
+                        Frequency = model.Frequency,
                         StartDate = model.StartDate,
-                        // calculate end date based on UTC time now plus 2 minutes
                         EndDate = EndDate1,
 
                     },
