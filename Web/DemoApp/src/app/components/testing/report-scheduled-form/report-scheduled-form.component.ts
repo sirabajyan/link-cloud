@@ -45,7 +45,7 @@ export class ReportScheduledFormComponent implements OnInit {
   eventRequestedForm!: FormGroup;
   reportTypes: string[] = [ReportType.HYPO, ReportType.CDIHOB];
   frequencies: string[] = [Frequency.MONTHLY, Frequency.DAILY, Frequency.WEEKLY];
-  delay: string[] = ["5", "10", "15", "20", "25"];
+  delays: string[] = ["5", "10", "15", "20", "25"];
 
   constructor(private testService: TestService, private snackBar: MatSnackBar) { }
 
@@ -54,9 +54,9 @@ export class ReportScheduledFormComponent implements OnInit {
       facilityId: new FormControl('MyFacility', Validators.required),
       selectedReportTypes: new FormControl([], Validators.required),
       selectedFrequency: new FormControl([], Validators.required),
-      delay: new FormControl([], Validators.required),
-      startDate: new FormControl('', Validators.required),
-      endDate: new FormControl('', Validators.required)
+      selectedDelay: new FormControl([], Validators.required),
+      startDate: new FormControl('', Validators.required)
+     // endDate: new FormControl('', Validators.required)
     });
   }
 
@@ -68,12 +68,12 @@ export class ReportScheduledFormComponent implements OnInit {
     return this.eventRequestedForm.get('selectedReportTypes') as FormControl;
   }
 
-  get facilityControl(): FormControl {
+  get frequencyControl(): FormControl {
     return this.eventRequestedForm.get('selectedFrequency') as FormControl;
   }
 
   get delayControl(): FormControl {
-    return this.eventRequestedForm.get('selectedFrequency') as FormControl;
+    return this.eventRequestedForm.get('selectedDelay') as FormControl;
   }
 
   get startDateControl(): FormArray {
@@ -94,7 +94,9 @@ export class ReportScheduledFormComponent implements OnInit {
       let event: IReportScheduled = this.eventRequestedForm.value;
       event.facilityId = this.facilityIdControl.value;
       event.reportTypes =   this.reportTypeControl.value;
-      this.testService.generateReportScheduledEvent(event.facilityId, event.reportTypes, event.startDate, event.endDate).subscribe(data => {
+      event.frequency = this.frequencyControl.value;
+      event.delay = this.delayControl.value;
+      this.testService.generateReportScheduledEvent(event.facilityId, event.reportTypes, event.frequency, event.startDate, event.delay).subscribe(data => {
         if (data) {
 
           this.eventGenerated.emit(data.id);

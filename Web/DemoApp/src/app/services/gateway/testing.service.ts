@@ -16,12 +16,13 @@ import {IDataPatientAcquiredRequested} from "../../interfaces/testing/patient-ac
 export class TestService {
   constructor(private http: HttpClient, private errorHandler: ErrorHandlingService, public appConfigService: AppConfigService) { }
 
-  generateReportScheduledEvent(facilityId: string, reportTypes: string[], startDate: Date, endDate: Date): Observable<IEntityCreatedResponse> {
+  generateReportScheduledEvent(facilityId: string, reportTypes: string[], frequency:string, startDate: Date, delay: string): Observable<IEntityCreatedResponse> {
     let event: IReportScheduled = {
       facilityId: facilityId,
+      frequency: frequency,
       reportTypes: reportTypes,
       startDate: startDate,
-      endDate: endDate
+      delay: delay
     };
 
     return this.http.post<IEntityCreatedResponse>(`${this.appConfigService.config?.baseApiUrl}/integration/report-scheduled`, event)

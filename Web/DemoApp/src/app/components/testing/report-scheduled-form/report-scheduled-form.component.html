@@ -31,7 +31,7 @@
           {{frequency}}
         </mat-option>
       </mat-select>
-      <mat-error *ngIf="facilityControl.hasError('required')">
+      <mat-error *ngIf="facilityIdControl.hasError('required')">
         Report Type is <strong>required</strong>
       </mat-error>
     </mat-form-field>
@@ -50,8 +50,13 @@
   </div>
   <div class="input-container">
     <mat-form-field class="form-input" appearance="outline">
-      <mat-label>Delay</mat-label>
-      <input matInput formControlName="delay" >
+      <mat-label>Delay (minutes)</mat-label>
+      <mat-select formControlName="selectedDelay">
+        <mat-option>None</mat-option>
+        <mat-option *ngFor="let delay of delays" [value]="delay">
+          {{delay}}
+        </mat-option>
+      </mat-select>
       <mat-error *ngIf="delayControl.hasError('required')">
         Delay is <strong>required</strong>
       </mat-error>

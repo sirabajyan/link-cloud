@@ -10,6 +10,13 @@ namespace LantanaGroup.Link.LinkAdmin.BFF.Application.Models.Integration
         /// <example>TestFacility01</example>
         public string FacilityId { get; set; } = string.Empty;
 
+
+        /// <summary>
+        /// The type of measure report to be generated
+        /// </summary>
+        /// <example>NHSNGlycemicControlHypoglycemicInitialPopulation</example>
+        public string Frequency { get; set; } = string.Empty;
+
         /// <summary>
         /// The type of measure report to be generated
         /// </summary>
@@ -23,15 +30,15 @@ namespace LantanaGroup.Link.LinkAdmin.BFF.Application.Models.Integration
         public DateTime? StartDate { get; set; }
 
         /// <summary>
-        /// The end date for the report period
+        /// The type of measure report to be generated
         /// </summary>
-        /// <example>2024-01-31T23:59:59Z</example>
-        public DateTime? EndDate { get; set; }
+        /// <example>NHSNGlycemicControlHypoglycemicInitialPopulation</example>
+        public string Delay { get; set; } = string.Empty;
+
     }
 
     public class ReportScheduledMessage
     {
-       //public List<KeyValuePair<string, object>>? Parameters { get; set; }
         public List<string> ReportTypes { get; set; } = [];
         public DateTime? StartDate { get; set; }
         public DateTime? EndDate { get; set; }
