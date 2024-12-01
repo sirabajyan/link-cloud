@@ -25,6 +25,17 @@ namespace LantanaGroup.Link.LinkAdmin.BFF.Application.Commands.Integration
             using Activity? activity = ServiceActivitySource.Instance.StartActivity("Producing Report Scheduled Event");
             string correlationId = Guid.NewGuid().ToString();
 
+            List<KeyValuePair<string, object>> parameters = [];
+            if (model.StartDate is not null && model.EndDate is not null)
+            {
+                parameters.Add(new KeyValuePair<string, Object>("StartDate", model.StartDate));
+                parameters.Add(new KeyValuePair<string, Object>("EndDate", model.EndDate));
+            }
+            else
+            {
+                throw new ArgumentNullException("Start and End date for report period cannot be null");
+            }
+
             try
             {
                 var headers = new Headers
@@ -32,31 +43,19 @@ namespace LantanaGroup.Link.LinkAdmin.BFF.Application.Commands.Integration
                     { "X-Correlation-Id", System.Text.Encoding.ASCII.GetBytes(correlationId) }
                 };
 
-                string Key = model.FacilityId;
-
-                DateTime EndDate = DateTime.UtcNow;
-
-                if (double.TryParse(model.Delay, out double delay))
+                ReportScheduledKey Key = new()
                 {
-                   EndDate = DateTime.UtcNow.AddMinutes(delay);
-                }
-                else
-                {
-                   EndDate = DateTime.UtcNow.AddMinutes(5); // default to 5 minutes
-                }
-               
-                DateTime EndDate1 = new DateTime(EndDate.Year, EndDate.Month, EndDate.Day, EndDate.Hour, EndDate.Minute, 0, DateTimeKind.Utc);
+                    FacilityId = model.FacilityId,
+                    ReportType = model.ReportType
+                };
+
                 var message = new Message<string, object>
                 {
-                    Key = model.FacilityId,
+                    Key = JsonSerializer.Serialize(Key),
                     Headers = headers,
                     Value = new ReportScheduledMessage()
                     {
-                        ReportTypes = model.ReportTypes,
-                        Frequency = model.Frequency,
-                        StartDate = model.StartDate,
-                        EndDate = EndDate1,
-
+                        Parameters = parameters
                     },
                 };
 

@@ -1,8 +1,6 @@
 export interface IReportScheduled {
   facilityId: string,
-  frequency: string
-  reportTypes: string[],
+  reportType: string,
   startDate: Date,
-  delay: string,
-  endDate?: Date
+  endDate: Date
 }
