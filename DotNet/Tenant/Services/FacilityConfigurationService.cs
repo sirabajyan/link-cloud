@@ -242,7 +242,7 @@ namespace LantanaGroup.Link.Tenant.Services
 
                 if (existingFacility is null)
                 {
-                    _logger.LogError($"Facility with Id: {facilityId} Not Found");
+                    _logger.LogError($"Facility with Id: {HtmlInputSanitizer.Sanitize(facilityId)} Not Found");
                     throw new ApplicationException($"Facility with Id: {facilityId} Not Found");
                 }
             }
