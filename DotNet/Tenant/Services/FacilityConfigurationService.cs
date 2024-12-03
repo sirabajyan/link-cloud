@@ -124,7 +124,7 @@ namespace LantanaGroup.Link.Tenant.Services
                 // validates facility 
                 if (facility is not null)
                 {
-                    _logger.LogError($"Facility {newFacility.FacilityId} already exists");
+                    _logger.LogError($"Facility {HtmlInputSanitizer.Sanitize(newFacility.FacilityId)} already exists");
 
                     throw new ApplicationException($"Facility {newFacility.FacilityId} already exists");
                 }
@@ -179,7 +179,7 @@ namespace LantanaGroup.Link.Tenant.Services
 
                 if (foundFacility != null && foundFacility.Id != id)
                 {
-                    _logger.LogError($"Facility {newFacility.FacilityId} already exists");
+                    _logger.LogError($"Facility {HtmlInputSanitizer.Sanitize(newFacility.FacilityId)} already exists");
 
                     throw new ApplicationException($"Facility {newFacility.FacilityId} already exists under another ID: {foundFacility.Id}");
                 }
