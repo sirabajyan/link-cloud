@@ -5,6 +5,7 @@ using Hl7.Fhir.Serialization;
 using LantanaGroup.Link.Report.Application.Interfaces;
 using LantanaGroup.Link.Report.Application.Models;
 using LantanaGroup.Link.Report.Core;
+using LantanaGroup.Link.Report.Domain.Enums;
 using LantanaGroup.Link.Report.Domain.Managers;
 using LantanaGroup.Link.Report.Entities;
 using LantanaGroup.Link.Report.Settings;
@@ -12,10 +13,10 @@ using LantanaGroup.Link.Shared.Application.Error.Exceptions;
 using LantanaGroup.Link.Shared.Application.Error.Interfaces;
 using LantanaGroup.Link.Shared.Application.Interfaces;
 using LantanaGroup.Link.Shared.Application.Models;
+using LantanaGroup.Link.Shared.Application.Utilities;
 using LantanaGroup.Link.Shared.Settings;
 using System.Text;
 using System.Text.Json;
-using LantanaGroup.Link.Shared.Application.Utilities;
 using Task = System.Threading.Tasks.Task;
 
 namespace LantanaGroup.Link.Report.Listeners
@@ -119,7 +120,7 @@ namespace LantanaGroup.Link.Report.Listeners
                                 }
 
                                 if (string.IsNullOrWhiteSpace(key.FacilityId) ||
-                                    string.IsNullOrWhiteSpace(key.ReportType) ||
+                                    string.IsNullOrWhiteSpace(value.ReportType) ||
                                     key.StartDate == DateTime.MinValue ||
                                     key.EndDate == DateTime.MinValue)
                                 {
@@ -128,29 +129,30 @@ namespace LantanaGroup.Link.Report.Listeners
                                 }
 
                                 // find existing report scheduled for this facility, report type, and date range
-                                var schedule = await measureReportScheduledManager.GetReportSchedule(key.FacilityId, key.StartDate, key.EndDate, key.ReportType, consumeCancellationToken) ??
+                                var schedule = await measureReportScheduledManager.GetReportSchedule(key.FacilityId, key.StartDate, key.EndDate, value.ReportType, consumeCancellationToken) ??
                                             throw new TransientException(
-                                                $"{Name}: report schedule not found for Facility {key.FacilityId} and reporting period of {key.StartDate} - {key.EndDate} for {key.ReportType}");
-                                
+                                                $"{Name}: report schedule not found for Facility {key.FacilityId} and reporting period of {key.StartDate} - {key.EndDate} for {value.ReportType}");
 
-                                //TODO Find long term solution Daniel Vargas
+
+                                var entry = await submissionEntryManager.SingleOrDefaultAsync(e =>
+                                    e.ReportScheduleId == schedule.Id
+                                    && e.PatientId == value.PatientId
+                                    && e.ReportType == value.ReportType, consumeCancellationToken);
+
+                                if (entry == null)
+                                {
+                                    entry = await submissionEntryManager.AddAsync(new MeasureReportSubmissionEntryModel()
+                                    {
+                                        PatientId = value.PatientId,
+                                        Status = PatientSubmissionStatus.NotEvaluated,
+                                        ReportScheduleId = schedule.Id,
+                                        FacilityId = facilityId,
+                                        ReportType = value.ReportType,
+                                    });
+                                }
+
                                 if (value.IsReportable)
                                 {
-                                    var entry = (await submissionEntryManager.SingleOrDefaultAsync(e =>
-                                        e.ReportScheduleId == schedule.Id
-                                        && e.PatientId == value.PatientId, consumeCancellationToken));
-
-                                    if (entry == null)
-                                    {
-                                        entry = new MeasureReportSubmissionEntryModel
-                                        {
-                                            FacilityId = key.FacilityId,
-                                            ReportScheduleId = schedule.Id,
-                                            PatientId = value.PatientId,
-                                            CreateDate = DateTime.UtcNow
-                                        };
-                                    }
-
                                     var resource = JsonSerializer.Deserialize<Resource>(value.Resource.ToString(),
                                         new JsonSerializerOptions().ForFhir(ModelInfo.ModelInspector,
                                             new FhirJsonPocoDeserializerSettings { Validator = null }));
@@ -185,18 +187,15 @@ namespace LantanaGroup.Link.Report.Listeners
 
                                         entry.UpdateContainedResource(returnedResource);
                                     }
-
-                                    if (entry.Id == null)
-                                    {
-                                        await submissionEntryManager.AddAsync(entry, consumeCancellationToken);
-                                    }
-                                    else
-                                    {
-                                        await submissionEntryManager.UpdateAsync(entry, consumeCancellationToken);
-                                    }
+                                }
+                                else
+                                {
+                                    entry.Status = PatientSubmissionStatus.NotReportable;
                                 }
 
-                                #region Patients To Query & Submision Report Handling
+                                var entries = await submissionEntryManager.FindAsync(s =>
+                                    s.FacilityId == entry.FacilityId && s.PatientId == entry.PatientId &&
+                                    s.ReportScheduleId == entry.ReportScheduleId);
 
                                 var submissionEntries =
                                     await submissionEntryManager.FindAsync(
