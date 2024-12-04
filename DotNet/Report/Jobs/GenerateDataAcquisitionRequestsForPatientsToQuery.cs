@@ -109,7 +109,7 @@ namespace LantanaGroup.Link.Report.Jobs
                         .Select(e => e.MeasureReport)
                         .ToList();
 
-                    var allReady = submissionEntries.All(x => x.ReadyForSubmission);
+                    var allReady = submissionEntries.All(x => x.ReadyForValidation);
 
                     if ((schedule.PatientsToQuery?.Count ?? 0) == 0 && allReady)
                     {

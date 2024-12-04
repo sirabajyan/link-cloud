@@ -20,31 +20,39 @@ using Task = System.Threading.Tasks.Task;
 
 namespace LantanaGroup.Link.Report.Listeners
 {
-    public class ResourceEvaluatedListener : BackgroundService
+    public class ValidationCompleteListener : BackgroundService
     {
 
-        private readonly ILogger<ResourceEvaluatedListener> _logger;
+        private readonly ILogger<ValidationCompleteListener> _logger;
         private readonly IKafkaConsumerFactory<ResourceEvaluatedKey, ResourceEvaluatedValue> _kafkaConsumerFactory;
-        private readonly IProducer<ValidationKey, ValidationValue> _readyForValidationProducer;
+       //private readonly IKafkaProducerFactory<SubmissionReportKey, SubmissionReportValue> _kafkaProducerFactory;
+        private readonly IProducer<SubmitReportKey, SubmitReportValue> _submissionReportProducer;
 
         private readonly IServiceScopeFactory _serviceScopeFactory;
 
         private readonly ITransientExceptionHandler<ResourceEvaluatedKey, ResourceEvaluatedValue> _transientExceptionHandler;
         private readonly IDeadLetterExceptionHandler<ResourceEvaluatedKey, ResourceEvaluatedValue> _deadLetterExceptionHandler;
 
+        private readonly PatientReportSubmissionBundler _bundler;
+        private readonly MeasureReportAggregator _aggregator;
+
         private string Name => this.GetType().Name;
 
-        public ResourceEvaluatedListener(
-            ILogger<ResourceEvaluatedListener> logger, 
+        public ValidationCompleteListener(
+            ILogger<ValidationCompleteListener> logger, 
             IKafkaConsumerFactory<ResourceEvaluatedKey, ResourceEvaluatedValue> kafkaConsumerFactory,
             ITransientExceptionHandler<ResourceEvaluatedKey, ResourceEvaluatedValue> transientExceptionHandler,
             IDeadLetterExceptionHandler<ResourceEvaluatedKey, ResourceEvaluatedValue> deadLetterExceptionHandler,
+            PatientReportSubmissionBundler bundler,
+            MeasureReportAggregator aggregator,
             IServiceScopeFactory serviceScopeFactory, 
-            IProducer<ValidationKey, ValidationValue> readyForValidationProducer)
+            IProducer<SubmitReportKey, SubmitReportValue> submissionReportProducer)
         {
 
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _kafkaConsumerFactory = kafkaConsumerFactory ?? throw new ArgumentException(nameof(kafkaConsumerFactory));
+            _bundler = bundler;
+            _aggregator = aggregator;
 
             _serviceScopeFactory = serviceScopeFactory;
 
@@ -56,7 +64,7 @@ namespace LantanaGroup.Link.Report.Listeners
 
             _deadLetterExceptionHandler.ServiceName = ReportConstants.ServiceName;
             _deadLetterExceptionHandler.Topic = nameof(KafkaTopic.ResourceEvaluated) + "-Error";
-            _readyForValidationProducer = readyForValidationProducer;
+            _submissionReportProducer = submissionReportProducer;
         }
 
         protected override Task ExecuteAsync(CancellationToken stoppingToken)
@@ -117,123 +125,67 @@ namespace LantanaGroup.Link.Report.Listeners
                                 {
                                     throw new DeadLetterException($"{Name}: Received message without correlation ID: {result.Topic}");
                                 }
-
-                                if (string.IsNullOrWhiteSpace(key.FacilityId) ||
-                                    string.IsNullOrWhiteSpace(key.ReportType) ||
-                                    key.StartDate == DateTime.MinValue ||
-                                    key.EndDate == DateTime.MinValue)
-                                {
-                                    throw new DeadLetterException(
-                                        $"{Name}: One or more required Key/Value properties are null, empty, or otherwise invalid.");
-                                }
-
-                                // find existing report scheduled for this facility, report type, and date range
-                                var schedule = await measureReportScheduledManager.GetReportSchedule(key.FacilityId, key.StartDate, key.EndDate, key.ReportType, consumeCancellationToken) ??
-                                            throw new TransientException(
-                                                $"{Name}: report schedule not found for Facility {key.FacilityId} and reporting period of {key.StartDate} - {key.EndDate} for {key.ReportType}");
                                 
-
-                                //TODO Find long term solution Daniel Vargas
-                                if (value.IsReportable)
-                                {
-                                    var entry = (await submissionEntryManager.SingleOrDefaultAsync(e =>
-                                        e.ReportScheduleId == schedule.Id
-                                        && e.PatientId == value.PatientId, consumeCancellationToken));
-
-                                    if (entry == null)
-                                    {
-                                        entry = new MeasureReportSubmissionEntryModel
-                                        {
-                                            FacilityId = key.FacilityId,
-                                            ReportScheduleId = schedule.Id,
-                                            PatientId = value.PatientId,
-                                            CreateDate = DateTime.UtcNow
-                                        };
-                                    }
-
-                                    var resource = JsonSerializer.Deserialize<Resource>(value.Resource.ToString(),
-                                        new JsonSerializerOptions().ForFhir(ModelInfo.ModelInspector,
-                                            new FhirJsonPocoDeserializerSettings { Validator = null }));
-
-                                    if (resource == null)
-                                    {
-                                        throw new DeadLetterException($"{Name}: Unable to deserialize event resource");
-                                    }
-
-                                    if (resource.TypeName == "MeasureReport")
-                                    {
-                                        entry.AddMeasureReport((MeasureReport)resource);
-                                    }
-                                    else
-                                    {
-                                        IFacilityResource returnedResource = null;
-
-                                        var existingReportResource =
-                                            await resourceManager.GetResourceAsync(key.FacilityId, resource.Id, resource.TypeName, value.PatientId,
-                                                consumeCancellationToken);
-
-                                        if (existingReportResource != null)
-                                        {
-                                            returnedResource =
-                                                await resourceManager.UpdateResourceAsync(existingReportResource,
-                                                    consumeCancellationToken);
-                                        }
-                                        else
-                                        {
-                                            returnedResource = await resourceManager.CreateResourceAsync(key.FacilityId, resource, value.PatientId, consumeCancellationToken);
-                                        }
-
-                                        entry.UpdateContainedResource(returnedResource);
-                                    }
-
-                                    if (entry.Id == null)
-                                    {
-                                        await submissionEntryManager.AddAsync(entry, consumeCancellationToken);
-                                    }
-                                    else
-                                    {
-                                        await submissionEntryManager.UpdateAsync(entry, consumeCancellationToken);
-                                    }
-                                }
-
                                 #region Patients To Query & Submision Report Handling
 
-                                var submissionEntries =
-                                    await submissionEntryManager.FindAsync(
-                                        e => e.PatientId == value.PatientId && e.ReportScheduleId == schedule.Id, consumeCancellationToken);
-
-                                var allReady = submissionEntries.All(x => x.ReadyForValidation);
-
-                                if ((schedule.PatientsToQuery?.Count ?? 0) == 0 && allReady)
+                                if (schedule.PatientsToQueryDataRequested)
                                 {
+                                    if (schedule.PatientsToQuery?.Contains(value.PatientId) ?? false)
+                                    {
+                                        schedule.PatientsToQuery.Remove(value.PatientId);
 
-                                    _readyForValidationProducer.Produce(nameof(KafkaTopic.SubmitReport),
-                                        new Message<ValidationKey, ValidationValue>
-                                        {
-                                            Key = new ValidationKey()
-                                            {
-                                                FacilityId = schedule.FacilityId,
-                                                ReportId = schedule.Id
-                                            },
-                                            Value = new ValidationValue
-                                            {
-                                                PatientId = value.PatientId,
-                                                ReportTypes = schedule.ReportType
-                                            },
-                                            Headers = new Headers
-                                            {
-                                            {
-                                                "X-Correlation-Id",
-                                                headerValue
-                                            }
-                                            }
-                                        });
+                                        await measureReportScheduledManager.UpdateAsync(schedule, consumeCancellationToken);
+                                    }
 
-                                    _readyForValidationProducer.Flush(consumeCancellationToken);
+                                    var submissionEntries =
+                                        await submissionEntryManager.FindAsync(
+                                            e => e.ReportScheduleId == schedule.Id, consumeCancellationToken);
 
-                                    
-                                    schedule.SubmitReportDateTime = DateTime.UtcNow;
-                                    await measureReportScheduledManager.UpdateAsync(schedule, consumeCancellationToken);
+                                    var allReady = submissionEntries.All(x => x.ReadyForValidation);
+
+                                    if ((schedule.PatientsToQuery?.Count ?? 0) == 0 && allReady)
+                                    {
+                                        var patientIds = submissionEntries.Select(s => s.PatientId).ToList();
+
+                                        List<MeasureReport?> measureReports = submissionEntries
+                                            .Select(e => e.MeasureReport)
+                                            .ToList();
+
+                                        
+                                        var organization = FhirHelperMethods.CreateOrganization(schedule.FacilityId, ReportConstants.BundleSettings.SubmittingOrganizationProfile, ReportConstants.BundleSettings.OrganizationTypeSystem,
+                                            ReportConstants.BundleSettings.CdcOrgIdSystem, ReportConstants.BundleSettings.DataAbsentReasonExtensionUrl, ReportConstants.BundleSettings.DataAbsentReasonUnknownCode);
+                                        
+                                        _submissionReportProducer.Produce(nameof(KafkaTopic.SubmitReport),
+                                            new Message<SubmitReportKey, SubmitReportValue>
+                                            {
+                                                Key = new SubmitReportKey()
+                                                {
+                                                    FacilityId = schedule.FacilityId,
+                                                    StartDate = schedule.ReportStartDate,
+                                                    EndDate = schedule.ReportEndDate
+                                                },
+                                                Value = new SubmitReportValue()
+                                                {
+                                                    PatientIds = patientIds,
+                                                    MeasureIds = measureReports.Select(mr => mr.Measure).Distinct().ToList(),
+                                                    Organization = organization,
+                                                    Aggregates = _aggregator.Aggregate(measureReports, organization.Id, key.StartDate, key.EndDate)
+                                                },
+                                                Headers = new Headers
+                                                {
+                                                {
+                                                    "X-Correlation-Id",
+                                                    headerValue
+                                                }
+                                                }
+                                            });
+
+                                        _submissionReportProducer.Flush(consumeCancellationToken);
+
+                                        
+                                        schedule.SubmitReportDateTime = DateTime.UtcNow;
+                                        await measureReportScheduledManager.UpdateAsync(schedule, consumeCancellationToken);
+                                    }
                                 }
 
                                 #endregion

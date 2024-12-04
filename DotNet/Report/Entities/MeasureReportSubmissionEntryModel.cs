@@ -10,6 +10,12 @@ using MongoDB.Bson.Serialization.Attributes;
 
 namespace LantanaGroup.Link.Report.Entities
 {
+    public enum ValidationStatus
+    {
+        Pending,
+        Passed,
+        Failed
+    }
 
     [BsonCollection("measureReportSubmissionEntry")]
     [BsonIgnoreExtraElements]
@@ -21,8 +27,10 @@ namespace LantanaGroup.Link.Report.Entities
         [BsonSerializer(typeof(MongoFhirBaseSerDes<MeasureReport>))]
         [BsonIgnoreIfNull]
         public MeasureReport? MeasureReport { get; set; }
-        public bool ReadyForSubmission { get; private set; } = false;
-        public List<ContainedResource> ContainedResources { get; private set; } = new List<ContainedResource>();
+        public bool ReadyForValidation { get; set; }
+        public ValidationStatus ValidationStatus { get; set; } = ValidationStatus.Pending; 
+        public bool ReadyForSubmission { get; set; }
+        public List<ContainedResource> ContainedResources { get; set; } = new List<ContainedResource>();
 
         public class ContainedResource
         {
@@ -64,7 +72,7 @@ namespace LantanaGroup.Link.Report.Entities
                 }
             }
 
-            ReadyForSubmission = ContainedResources.All(x => !string.IsNullOrWhiteSpace(x.DocumentId) && MeasureReport != null);
+            ReadyForValidation = ContainedResources.All(x => !string.IsNullOrWhiteSpace(x.DocumentId) && MeasureReport != null);
         }
 
 
@@ -89,7 +97,7 @@ namespace LantanaGroup.Link.Report.Entities
                 containedResource.DocumentId = facilityResource.GetId();
             }
 
-            ReadyForSubmission = ContainedResources.All(x => !string.IsNullOrWhiteSpace(x.DocumentId) && MeasureReport != null);
+            ReadyForValidation = ContainedResources.All(x => !string.IsNullOrWhiteSpace(x.DocumentId) && MeasureReport != null);
         }
     }
 }
