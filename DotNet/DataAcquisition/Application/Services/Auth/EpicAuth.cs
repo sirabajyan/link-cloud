@@ -62,7 +62,7 @@ public class EpicAuth : IAuth
 
     private string Sanitize(string input)
     {
-        var sanitizedInput = Regex.Replace(input, @"\t|\n|\r", string.Empty, RegexOptions.Compiled);
+        var sanitizedInput = Regex.Replace(input, @"\t|\n|\r", string.Empty, RegexOptions.Compiled).Trim();
         return sanitizedInput;
     }
 
