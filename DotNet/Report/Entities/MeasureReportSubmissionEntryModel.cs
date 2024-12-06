@@ -30,6 +30,7 @@ namespace LantanaGroup.Link.Report.Entities
         public MeasureReport? MeasureReport { get; set; }
 
         public PatientSubmissionStatus Status { get; set; } = PatientSubmissionStatus.NotEvaluated;
+        public bool SubmittedForValidation { get; set; }
         public bool ReadyForValidation { get; set; }
         public ValidationStatus ValidationStatus { get; set; } = ValidationStatus.Pending; 
         public bool ReadyForSubmission { get; set; }
@@ -103,6 +104,11 @@ namespace LantanaGroup.Link.Report.Entities
             }
 
             ReadyForValidation = ContainedResources.All(x => !string.IsNullOrWhiteSpace(x.DocumentId) && MeasureReport != null);
+
+            if (ReadyForValidation)
+            {
+                Status = PatientSubmissionStatus.ReadyForValidation;
+            }
         }
     }
 }

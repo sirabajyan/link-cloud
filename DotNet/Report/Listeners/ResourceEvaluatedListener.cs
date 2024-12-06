@@ -4,7 +4,6 @@ using Hl7.Fhir.Model;
 using Hl7.Fhir.Serialization;
 using LantanaGroup.Link.Report.Application.Interfaces;
 using LantanaGroup.Link.Report.Application.Models;
-using LantanaGroup.Link.Report.Core;
 using LantanaGroup.Link.Report.Domain.Enums;
 using LantanaGroup.Link.Report.Domain.Managers;
 using LantanaGroup.Link.Report.Entities;
@@ -13,7 +12,6 @@ using LantanaGroup.Link.Shared.Application.Error.Exceptions;
 using LantanaGroup.Link.Shared.Application.Error.Interfaces;
 using LantanaGroup.Link.Shared.Application.Interfaces;
 using LantanaGroup.Link.Shared.Application.Models;
-using LantanaGroup.Link.Shared.Application.Utilities;
 using LantanaGroup.Link.Shared.Settings;
 using System.Text;
 using System.Text.Json;
@@ -26,7 +24,7 @@ namespace LantanaGroup.Link.Report.Listeners
 
         private readonly ILogger<ResourceEvaluatedListener> _logger;
         private readonly IKafkaConsumerFactory<ResourceEvaluatedKey, ResourceEvaluatedValue> _kafkaConsumerFactory;
-        private readonly IProducer<ValidationKey, ValidationValue> _readyForValidationProducer;
+        private readonly IProducer<ReadyForValidationKey, ReadyForValidationValue> _readyForValidationProducer;
 
         private readonly IServiceScopeFactory _serviceScopeFactory;
 
@@ -41,7 +39,7 @@ namespace LantanaGroup.Link.Report.Listeners
             ITransientExceptionHandler<ResourceEvaluatedKey, ResourceEvaluatedValue> transientExceptionHandler,
             IDeadLetterExceptionHandler<ResourceEvaluatedKey, ResourceEvaluatedValue> deadLetterExceptionHandler,
             IServiceScopeFactory serviceScopeFactory, 
-            IProducer<ValidationKey, ValidationValue> readyForValidationProducer)
+            IProducer<ReadyForValidationKey, ReadyForValidationValue> readyForValidationProducer)
         {
 
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -145,7 +143,10 @@ namespace LantanaGroup.Link.Report.Listeners
                                     {
                                         PatientId = value.PatientId,
                                         Status = PatientSubmissionStatus.NotEvaluated,
-                                        ReportScheduleId = schedule.Id,
+                                        ValidationStatus = ValidationStatus.Pending,
+                                        ReadyForValidation = false,
+                                        ReadyForSubmission = false,
+                                        ReportScheduleId = schedule.Id!,
                                         FacilityId = facilityId,
                                         ReportType = value.ReportType,
                                     });
@@ -193,31 +194,29 @@ namespace LantanaGroup.Link.Report.Listeners
                                     entry.Status = PatientSubmissionStatus.NotReportable;
                                 }
 
-                                var entries = await submissionEntryManager.FindAsync(s =>
-                                    s.FacilityId == entry.FacilityId && s.PatientId == entry.PatientId &&
-                                    s.ReportScheduleId == entry.ReportScheduleId);
+                                await submissionEntryManager.UpdateAsync(entry, cancellationToken);
 
                                 var submissionEntries =
                                     await submissionEntryManager.FindAsync(
-                                        e => e.PatientId == value.PatientId && e.ReportScheduleId == schedule.Id, consumeCancellationToken);
+                                        e => e.FacilityId == entry.FacilityId 
+                                             && e.PatientId == value.PatientId && e.ReportScheduleId == schedule.Id, consumeCancellationToken);
 
                                 var allReady = submissionEntries.All(x => x.ReadyForValidation);
 
-                                if ((schedule.PatientsToQuery?.Count ?? 0) == 0 && allReady)
+                                if (allReady)
                                 {
-
-                                    _readyForValidationProducer.Produce(nameof(KafkaTopic.SubmitReport),
-                                        new Message<ValidationKey, ValidationValue>
+                                    _readyForValidationProducer.Produce(nameof(KafkaTopic.ReadyForValidation),
+                                        new Message<ReadyForValidationKey, ReadyForValidationValue>
                                         {
-                                            Key = new ValidationKey()
+                                            Key = new ReadyForValidationKey()
                                             {
                                                 FacilityId = schedule.FacilityId,
-                                                ReportId = schedule.Id
+                                                ReportId = schedule.Id!
                                             },
-                                            Value = new ValidationValue
+                                            Value = new ReadyForValidationValue
                                             {
                                                 PatientId = value.PatientId,
-                                                ReportTypes = schedule.ReportType
+                                                ReportTypes = schedule.ReportTypes.ToList()
                                             },
                                             Headers = new Headers
                                             {
@@ -230,12 +229,12 @@ namespace LantanaGroup.Link.Report.Listeners
 
                                     _readyForValidationProducer.Flush(consumeCancellationToken);
 
-                                    
-                                    schedule.SubmitReportDateTime = DateTime.UtcNow;
-                                    await measureReportScheduledManager.UpdateAsync(schedule, consumeCancellationToken);
+                                    foreach (var e in submissionEntries)
+                                    {
+                                        e.SubmittedForValidation = true;
+                                        await submissionEntryManager.UpdateAsync(e, cancellationToken);
+                                    }
                                 }
-
-                                #endregion
                             }
                             catch (DeadLetterException ex)
                             {

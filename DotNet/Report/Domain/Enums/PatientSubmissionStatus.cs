@@ -4,6 +4,7 @@ public enum PatientSubmissionStatus
 {
     NotEvaluated = 1,
     NotReportable = 2,
-    ReadyForSubmission = 3
+    ReadyForValidation = 3,
+    ReadyForSubmission = 4
 }
 
