@@ -200,6 +200,11 @@ namespace LantanaGroup.Link.Report.Listeners
                                     entry.Status = PatientSubmissionStatus.NotReportable;
                                 }
 
+                                if (entry.Status == PatientSubmissionStatus.ReadyForSubmission)
+                                {
+                                    entry.PatientSubmission = await _bundler.GenerateBundle(entry.FacilityId, entry.PatientId, entry.ReportScheduleId);
+                                }
+
                                 await submissionEntryManager.UpdateAsync(entry, consumeCancellationToken);
 
                                 var entries = await submissionEntryManager.FindAsync(s =>
@@ -207,22 +212,14 @@ namespace LantanaGroup.Link.Report.Listeners
                                     s.ReportScheduleId == entry.ReportScheduleId
                                     && s.Status != PatientSubmissionStatus.NotReportable, cancellationToken);
 
-
-                                if (entries.All(e => e.Status == PatientSubmissionStatus.ReadyForSubmission))
-                                {
-                                    entry.PatientSubmission = await _bundler.GenerateBundle(entry.FacilityId, entry.PatientId, entry.ReportScheduleId);
-                                    await submissionEntryManager.UpdateAsync(entry, consumeCancellationToken);
-                                }
-
                                 #region Submit Report Handling
-
                                 if (schedule.PatientsToQueryDataRequested)
                                 {
                                     var allReady = entries.All(x => x.Status != PatientSubmissionStatus.NotEvaluated);
 
                                     if (allReady)
                                     {
-                                        var patientIds = entries.Where(s => s.Status == PatientSubmissionStatus.ReadyForSubmission).Select(s => s.PatientId).ToList();
+                                        var patientIds = entries.Select(s => s.PatientId).ToList();
 
                                         List<MeasureReport?> measureReports = entries
                                               .Select(e => e.MeasureReport)
