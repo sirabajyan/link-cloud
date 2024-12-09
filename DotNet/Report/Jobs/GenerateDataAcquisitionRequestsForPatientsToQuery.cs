@@ -65,7 +65,7 @@ namespace LantanaGroup.Link.Report.Jobs
                     $"Executing GenerateDataAcquisitionRequestsForPatientsToQuery for MeasureReportScheduleModel {schedule.Id}");
 
                 var submissionEntries = await _database.SubmissionEntryRepository.FindAsync(e => e.ReportScheduleId == schedule.Id);
-                var patientsToEvaluate = submissionEntries.Where(x => x.Status == PatientSubmissionStatus.NotEvaluated).Select(x => x.PatientId).Distinct().ToList();
+                var patientsToEvaluate = submissionEntries.Where(x => x.Status == PatientSubmissionStatus.PendingEvaluation).Select(x => x.PatientId).Distinct().ToList();
                 var needValidation = submissionEntries.Where(x => x.ValidationStatus == ValidationStatus.Pending).Select(p => p.PatientId).ToList();
                 if (patientsToEvaluate.Any())
                 {

@@ -29,11 +29,8 @@ namespace LantanaGroup.Link.Report.Entities
         [BsonIgnoreIfNull]
         public MeasureReport? MeasureReport { get; set; }
 
-        public PatientSubmissionStatus Status { get; set; } = PatientSubmissionStatus.NotEvaluated;
-        public bool SubmittedForValidation { get; set; }
-        public bool ReadyForValidation { get; set; }
-        public ValidationStatus ValidationStatus { get; set; } = ValidationStatus.Pending; 
-        public bool ReadyForSubmission { get; set; }
+        public PatientSubmissionStatus Status { get; set; } = PatientSubmissionStatus.PendingEvaluation;
+        public ValidationStatus ValidationStatus { get; set; } = ValidationStatus.Pending;
         public List<ContainedResource> ContainedResources { get; set; } = new List<ContainedResource>();
 
         public PatientSubmissionModel? PatientSubmission { get; set; }
@@ -78,7 +75,7 @@ namespace LantanaGroup.Link.Report.Entities
                 }
             }
 
-            ReadyForValidation = ContainedResources.All(x => !string.IsNullOrWhiteSpace(x.DocumentId) && MeasureReport != null);
+            Status = ContainedResources.All(x => !string.IsNullOrWhiteSpace(x.DocumentId) && MeasureReport != null) ? PatientSubmissionStatus.ReadyForValidation : Status;
         }
 
 
@@ -103,12 +100,7 @@ namespace LantanaGroup.Link.Report.Entities
                 containedResource.DocumentId = facilityResource.GetId();
             }
 
-            ReadyForValidation = ContainedResources.All(x => !string.IsNullOrWhiteSpace(x.DocumentId) && MeasureReport != null);
-
-            if (ReadyForValidation)
-            {
-                Status = PatientSubmissionStatus.ReadyForValidation;
-            }
+            Status = ContainedResources.All(x => !string.IsNullOrWhiteSpace(x.DocumentId) && MeasureReport != null) ? PatientSubmissionStatus.ReadyForValidation : Status;
         }
     }
 }

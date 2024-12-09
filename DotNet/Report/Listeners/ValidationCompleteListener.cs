@@ -13,6 +13,7 @@ using LantanaGroup.Link.Shared.Application.Models;
 using LantanaGroup.Link.Shared.Application.Utilities;
 using LantanaGroup.Link.Shared.Settings;
 using System.Text;
+using LantanaGroup.Link.Report.Domain.Enums;
 using Task = System.Threading.Tasks.Task;
 
 namespace LantanaGroup.Link.Report.Listeners
@@ -135,22 +136,20 @@ namespace LantanaGroup.Link.Report.Listeners
                                     entry.ValidationStatus =
                                         value.IsValid ? ValidationStatus.Passed : ValidationStatus.Failed;
 
-                                    entry.ReadyForSubmission = true;
+                                    entry.Status = PatientSubmissionStatus.ValidationComplete;
 
                                     await submissionEntryManager.UpdateAsync(entry, cancellationToken);
                                 }
 
-                                
 
                                 #region Patients To Query & Submision Report Handling
 
                                 if (schedule.PatientsToQueryDataRequested)
                                 {
                                     submissionEntries =
-                                        await submissionEntryManager.FindAsync(
-                                            e => e.ReportScheduleId == schedule.Id, consumeCancellationToken);
+                                        await submissionEntryManager.FindAsync(e => e.FacilityId == schedule.FacilityId && e.ReportScheduleId == schedule.Id && e.Status != PatientSubmissionStatus.NotReportable, consumeCancellationToken);
 
-                                    var allReady = submissionEntries.All(x => x.ReadyForSubmission);
+                                    var allReady = submissionEntries.All(x => x.Status == PatientSubmissionStatus.ValidationComplete);
 
                                     if (allReady)
                                     {
@@ -194,6 +193,12 @@ namespace LantanaGroup.Link.Report.Listeners
                                         
                                         schedule.SubmitReportDateTime = DateTime.UtcNow;
                                         await measureReportScheduledManager.UpdateAsync(schedule, consumeCancellationToken);
+
+                                        foreach (var e in submissionEntries)
+                                        {
+                                            e.Status = PatientSubmissionStatus.Submitted;
+                                            await submissionEntryManager.UpdateAsync(e, cancellationToken);
+                                        }
                                     }
                                 }
 

@@ -142,10 +142,8 @@ namespace LantanaGroup.Link.Report.Listeners
                                     entry = await submissionEntryManager.AddAsync(new MeasureReportSubmissionEntryModel()
                                     {
                                         PatientId = value.PatientId,
-                                        Status = PatientSubmissionStatus.NotEvaluated,
+                                        Status = PatientSubmissionStatus.PendingEvaluation,
                                         ValidationStatus = ValidationStatus.Pending,
-                                        ReadyForValidation = false,
-                                        ReadyForSubmission = false,
                                         ReportScheduleId = schedule.Id!,
                                         FacilityId = facilityId,
                                         ReportType = value.ReportType,
@@ -199,9 +197,9 @@ namespace LantanaGroup.Link.Report.Listeners
                                 var submissionEntries =
                                     await submissionEntryManager.FindAsync(
                                         e => e.FacilityId == entry.FacilityId 
-                                             && e.PatientId == value.PatientId && e.ReportScheduleId == schedule.Id, consumeCancellationToken);
+                                             && e.PatientId == value.PatientId && e.ReportScheduleId == schedule.Id && e.Status != PatientSubmissionStatus.NotReportable, consumeCancellationToken);
 
-                                var allReady = submissionEntries.All(x => x.ReadyForValidation);
+                                var allReady = submissionEntries.All(x => x.Status == PatientSubmissionStatus.ReadyForValidation);
 
                                 if (allReady)
                                 {
@@ -231,7 +229,7 @@ namespace LantanaGroup.Link.Report.Listeners
 
                                     foreach (var e in submissionEntries)
                                     {
-                                        e.SubmittedForValidation = true;
+                                        e.Status = PatientSubmissionStatus.ValidationRequested;
                                         await submissionEntryManager.UpdateAsync(e, cancellationToken);
                                     }
                                 }
