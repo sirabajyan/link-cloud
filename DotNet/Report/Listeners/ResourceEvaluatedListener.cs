@@ -200,33 +200,31 @@ namespace LantanaGroup.Link.Report.Listeners
                                     entry.Status = PatientSubmissionStatus.NotReportable;
                                 }
 
+                                await submissionEntryManager.UpdateAsync(entry, consumeCancellationToken);
+
                                 var entries = await submissionEntryManager.FindAsync(s =>
                                     s.FacilityId == entry.FacilityId && s.PatientId == entry.PatientId &&
-                                    s.ReportScheduleId == entry.ReportScheduleId);
+                                    s.ReportScheduleId == entry.ReportScheduleId
+                                    && s.Status != PatientSubmissionStatus.NotReportable, cancellationToken);
 
-                                //This Patient is ready to submit, so build out their bundle.
+
                                 if (entries.All(e => e.Status == PatientSubmissionStatus.ReadyForSubmission))
                                 {
                                     entry.PatientSubmission = await _bundler.GenerateBundle(entry.FacilityId, entry.PatientId, entry.ReportScheduleId);
+                                    await submissionEntryManager.UpdateAsync(entry, consumeCancellationToken);
                                 }
-
-                                await submissionEntryManager.UpdateAsync(entry, consumeCancellationToken);
 
                                 #region Submit Report Handling
 
                                 if (schedule.PatientsToQueryDataRequested)
                                 {
-                                    var submissionEntries =
-                                        await submissionEntryManager.FindAsync(
-                                            e => e.ReportScheduleId == schedule.Id, consumeCancellationToken);
-
-                                    var allReady = submissionEntries.All(x => x.Status != PatientSubmissionStatus.NotEvaluated);
+                                    var allReady = entries.All(x => x.Status != PatientSubmissionStatus.NotEvaluated);
 
                                     if (allReady)
                                     {
-                                        var patientIds = submissionEntries.Where(s => s.Status == PatientSubmissionStatus.ReadyForSubmission).Select(s => s.PatientId).ToList();
+                                        var patientIds = entries.Where(s => s.Status == PatientSubmissionStatus.ReadyForSubmission).Select(s => s.PatientId).ToList();
 
-                                        List<MeasureReport?> measureReports = submissionEntries
+                                        List<MeasureReport?> measureReports = entries
                                               .Select(e => e.MeasureReport)
                                               .Where(report => report != null)
                                               .ToList();
