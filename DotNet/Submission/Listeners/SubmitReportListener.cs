@@ -291,7 +291,7 @@ namespace LantanaGroup.Link.Submission.Listeners
 
                                 #region Patient and Other Resources Bundles
 
-                                var patientIds = value.PatientIds.Distinct().ToList();
+                                var patientIds = value.PatientIds.Select(p => p).ToList();
 
                                 var batchSize = _submissionConfig.PatientBundleBatchSize;
 
