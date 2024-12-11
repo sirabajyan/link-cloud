@@ -53,7 +53,7 @@ public class PatientCensusScheduledListener : BaseListener<PatientCensusSchedule
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error occurred while processing the message.");
+            Logger.LogError(ex, "Error occurred while processing the message: {1}", ex.Message);
             throw new TransientException("Error occurred while processing the message.", ex);
         }
 
@@ -70,6 +70,7 @@ public class PatientCensusScheduledListener : BaseListener<PatientCensusSchedule
         }
         catch (Exception ex)
         {
+            Logger.LogError(ex, "Error occurred while attempting to produce a message: {1}", ex.Message);
             throw new TransientException("An error producing a PatientIdsAcquiredMessage", ex);
         }
     }
