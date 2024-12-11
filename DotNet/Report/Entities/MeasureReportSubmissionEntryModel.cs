@@ -33,8 +33,6 @@ namespace LantanaGroup.Link.Report.Entities
         public ValidationStatus ValidationStatus { get; set; } = ValidationStatus.Pending;
         public List<ContainedResource> ContainedResources { get; set; } = new List<ContainedResource>();
 
-        public PatientSubmissionModel? PatientSubmission { get; set; }
-
         public class ContainedResource
         {
             public string ResourceType { get; set; } = string.Empty;
