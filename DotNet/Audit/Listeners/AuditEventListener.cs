@@ -52,7 +52,7 @@ namespace LantanaGroup.Link.Audit.Listeners
             var config = new ConsumerConfig()
             {
                 GroupId = AuditConstants.ServiceName,
-                EnableAutoCommit = falsee
+                EnableAutoCommit = false
             };
 
             using (var _consumer = _kafkaConsumerFactory.CreateConsumer(config))
