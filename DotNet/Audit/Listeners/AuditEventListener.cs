@@ -75,6 +75,7 @@ namespace LantanaGroup.Link.Audit.Listeners
                                     _ = await _auditEventProcessor.ProcessAuditEvent(result, cancellationToken);
 
                                     //consume the result and offset
+                                    // dummy comment to trigger a unit test 
                                     _consumer.Commit(result);
                                 }
                                 catch (DeadLetterException ex)
