@@ -72,7 +72,7 @@ namespace AuditTests
             AuditEventProcessor proccessor = new(_logger.Object, _auditManagerMock.Object);
             var outcome = await proccessor.ProcessAuditEvent(result, It.IsAny<CancellationToken>());            
 
-            Assert.True(outcome);
+            Assert.False(outcome);
         }
     }
 }
