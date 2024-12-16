@@ -158,7 +158,7 @@ namespace LantanaGroup.Link.Report.Jobs
             }
             catch (Exception ex)
             {
-                _logger.LogError(null, ex, $"Error encountered in GenerateDataAcquisitionRequestsForPatientsToQuery: {ex.Message + Environment.NewLine + ex.StackTrace}");
+                _logger.LogError(ex, "Exception encountered during GenerateDataAcquisitionRequestsForPatientsToQuery");
                 if (schedule != null)
                 {
                     await MeasureReportScheduleService.RescheduleJob(schedule, await _schedulerFactory.GetScheduler());
