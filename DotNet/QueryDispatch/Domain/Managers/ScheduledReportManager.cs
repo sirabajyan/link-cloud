@@ -1,10 +1,10 @@
 ﻿using Confluent.Kafka;
 using KellermanSoftware.CompareNetObjects;
 using LantanaGroup.Link.QueryDispatch.Domain.Entities;
-using LantanaGroup.Link.Shared.Application.Interfaces;
 using LantanaGroup.Link.Shared.Application.Models;
 using LantanaGroup.Link.Shared.Application.Models.Kafka;
 using LantanaGroup.Link.Shared.Application.Repositories.Interfaces;
+using LantanaGroup.Link.Shared.Application.Services.Security;
 using Quartz;
 using QueryDispatch.Application.Settings;
 
@@ -42,43 +42,41 @@ namespace QueryDispatch.Domain.Managers
         {
             try
             {
-                // await _datastore.AddAsync(scheduledReport);
-
                 await _scheduledReportRepository.AddAsync(scheduledReport);
 
-                _logger.LogInformation($"Created schedule report for faciltiy {scheduledReport.FacilityId}");
+                _logger.LogInformation($"Created schedule report for faciltiy {HtmlInputSanitizer.Sanitize(scheduledReport.FacilityId)}");
 
-                    var headers = new Headers
+                var headers = new Headers
                         {
                             { "X-Correlation-Id", System.Text.Encoding.ASCII.GetBytes(scheduledReport.ReportPeriods[0].CorrelationId) }
                         };
 
-                    var auditMessage = new AuditEventMessage
-                    {
-                        FacilityId = scheduledReport.FacilityId,
-                        ServiceName = QueryDispatchConstants.ServiceName,
-                        Action = AuditEventType.Create,
-                        EventDate = DateTime.UtcNow,
-                        Resource = typeof(ScheduledReportEntity).Name,
-                        Notes = $"Created schedule report {scheduledReport.Id} for facility {scheduledReport.FacilityId} "
-                    };
+                var auditMessage = new AuditEventMessage
+                {
+                    FacilityId = scheduledReport.FacilityId,
+                    ServiceName = QueryDispatchConstants.ServiceName,
+                    Action = AuditEventType.Create,
+                    EventDate = DateTime.UtcNow,
+                    Resource = typeof(ScheduledReportEntity).Name,
+                    Notes = $"Created schedule report {scheduledReport.Id} for facility {scheduledReport.FacilityId} "
+                };
 
-                    _producer.Produce(nameof(KafkaTopic.AuditableEventOccurred), new Message<string, AuditEventMessage>
-                    {
-                        Value = auditMessage,
-                        Headers = headers
-                    });
+                _producer.Produce(nameof(KafkaTopic.AuditableEventOccurred), new Message<string, AuditEventMessage>
+                {
+                    Value = auditMessage,
+                    Headers = headers
+                });
 
-                    _producer.Flush();
-                
+                _producer.Flush();
+
 
 
                 return scheduledReport.FacilityId;
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Failed to create scheduled report for facility {scheduledReport.FacilityId}.", ex);
-                throw new ApplicationException($"Failed to create scheduled report for facility {scheduledReport.FacilityId}.");
+                _logger.LogError($"Failed to create scheduled report for facility {HtmlInputSanitizer.Sanitize(scheduledReport.FacilityId)}.", ex);
+                throw new ApplicationException($"Failed to create scheduled report for facility {HtmlInputSanitizer.Sanitize(scheduledReport.FacilityId)}.");
             }
         }
 
@@ -90,7 +88,7 @@ namespace QueryDispatch.Domain.Managers
 
                 ReportPeriodEntity newReportPeriod = newReport.ReportPeriods[0];
 
-                ReportPeriodEntity existingReportPeriod = existingReport.ReportPeriods.FirstOrDefault(x => x.ReportType == newReportPeriod.ReportType);
+                ReportPeriodEntity existingReportPeriod = existingReport.ReportPeriods.FirstOrDefault(x => x.Frequency == newReportPeriod.Frequency);
                 if (existingReportPeriod != null)
                 {
                     var resultChanges = _compareLogic.Compare(existingReport.ReportPeriods, newReport.ReportPeriods);
@@ -107,6 +105,8 @@ namespace QueryDispatch.Domain.Managers
                     });
                     existingReportPeriod.StartDate = newReportPeriod.StartDate;
                     existingReportPeriod.EndDate = newReportPeriod.EndDate;
+                    existingReportPeriod.Frequency = newReportPeriod.Frequency;
+                    existingReportPeriod.ReportTypes = newReportPeriod.ReportTypes;
                     existingReportPeriod.CorrelationId = newReportPeriod.CorrelationId;
                     existingReportPeriod.ModifyDate = DateTime.UtcNow;
                 }
@@ -114,9 +114,10 @@ namespace QueryDispatch.Domain.Managers
                 {
                     existingReport.ReportPeriods.Add(new ReportPeriodEntity()
                     {
-                        ReportType = newReportPeriod.ReportType,
+                        ReportTypes = newReportPeriod.ReportTypes,
                         StartDate = newReportPeriod.StartDate,
                         EndDate = newReportPeriod.EndDate,
+                        Frequency = newReportPeriod.Frequency,
                         CreateDate = DateTime.UtcNow,
                         ModifyDate = DateTime.UtcNow,
                         CorrelationId = newReportPeriod.CorrelationId
@@ -124,42 +125,40 @@ namespace QueryDispatch.Domain.Managers
 
                 }
 
-                //await _dataStore.Update(existingReport);
-
                 await _scheduledReportRepository.UpdateAsync(existingReport);
 
-                _logger.LogInformation($"Update scheduled report type {newReportPeriod.ReportType} for facility id {existingReport.FacilityId}");
+                _logger.LogInformation($"Update scheduled report type {HtmlInputSanitizer.Sanitize(newReportPeriod.ReportTypes.ToString())} for facility id {HtmlInputSanitizer.Sanitize(existingReport.FacilityId)}");
 
-                    var headers = new Headers
+                var headers = new Headers
                     {
                         { "X-Correlation-Id", System.Text.Encoding.ASCII.GetBytes(newReportPeriod.CorrelationId) }
                     };
 
-                    var auditMessage = new AuditEventMessage
-                    {
-                        FacilityId = existingReport.FacilityId,
-                        ServiceName = QueryDispatchConstants.ServiceName,
-                        Action = AuditEventType.Update,
-                        EventDate = DateTime.UtcNow,
-                        PropertyChanges = propertyChanges,
-                        Resource = typeof(ScheduledReportEntity).Name,
-                        Notes = $"Updated schedule report {existingReport.Id} for facility {existingReport.FacilityId}"
-                    };
+                var auditMessage = new AuditEventMessage
+                {
+                    FacilityId = existingReport.FacilityId,
+                    ServiceName = QueryDispatchConstants.ServiceName,
+                    Action = AuditEventType.Update,
+                    EventDate = DateTime.UtcNow,
+                    PropertyChanges = propertyChanges,
+                    Resource = typeof(ScheduledReportEntity).Name,
+                    Notes = $"Updated schedule report {existingReport.Id} for facility {existingReport.FacilityId}"
+                };
 
-                    _producer.Produce(nameof(KafkaTopic.AuditableEventOccurred), new Message<string, AuditEventMessage>
-                    {
-                        Value = auditMessage,
-                        Headers = headers
-                    });
+                _producer.Produce(nameof(KafkaTopic.AuditableEventOccurred), new Message<string, AuditEventMessage>
+                {
+                    Value = auditMessage,
+                    Headers = headers
+                });
 
-                    _producer.Flush();
-                
+                _producer.Flush();
+
 
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Failed to update scheduled report for facility id {existingReport.FacilityId}.", ex);
-                throw new ApplicationException($"Failed to update scheduled report for facility id {existingReport.FacilityId}.");
+                _logger.LogError($"Failed to update scheduled report for facility id {HtmlInputSanitizer.Sanitize(existingReport.FacilityId)}.", ex);
+                throw new ApplicationException($"Failed to update scheduled report for facility id {HtmlInputSanitizer.Sanitize(existingReport.FacilityId)}.");
             }
         }
     }

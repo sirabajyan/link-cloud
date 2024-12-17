@@ -10,6 +10,12 @@ using MongoDB.Bson.Serialization.Attributes;
 
 namespace LantanaGroup.Link.Report.Entities
 {
+    public enum ValidationStatus
+    {
+        Pending,
+        Passed,
+        Failed
+    }
 
     [BsonCollection("measureReportSubmissionEntry")]
     [BsonIgnoreExtraElements]
@@ -18,11 +24,14 @@ namespace LantanaGroup.Link.Report.Entities
         public string FacilityId { get; set; } = string.Empty;
         public string ReportScheduleId { get; set; } = string.Empty;
         public string PatientId { get; set; } = string.Empty;
+        public string ReportType { get; set; } = string.Empty;
         [BsonSerializer(typeof(MongoFhirBaseSerDes<MeasureReport>))]
         [BsonIgnoreIfNull]
         public MeasureReport? MeasureReport { get; set; }
-        public bool ReadyForSubmission { get; private set; } = false;
-        public List<ContainedResource> ContainedResources { get; private set; } = new List<ContainedResource>();
+
+        public PatientSubmissionStatus Status { get; set; } = PatientSubmissionStatus.PendingEvaluation;
+        public ValidationStatus ValidationStatus { get; set; } = ValidationStatus.Pending;
+        public List<ContainedResource> ContainedResources { get; set; } = new List<ContainedResource>();
 
         public class ContainedResource
         {
@@ -64,7 +73,7 @@ namespace LantanaGroup.Link.Report.Entities
                 }
             }
 
-            ReadyForSubmission = ContainedResources.All(x => !string.IsNullOrWhiteSpace(x.DocumentId) && MeasureReport != null);
+            Status = ContainedResources.All(x => !string.IsNullOrWhiteSpace(x.DocumentId) && MeasureReport != null) ? PatientSubmissionStatus.ReadyForValidation : Status;
         }
 
 
@@ -89,7 +98,7 @@ namespace LantanaGroup.Link.Report.Entities
                 containedResource.DocumentId = facilityResource.GetId();
             }
 
-            ReadyForSubmission = ContainedResources.All(x => !string.IsNullOrWhiteSpace(x.DocumentId) && MeasureReport != null);
+            Status = ContainedResources.All(x => !string.IsNullOrWhiteSpace(x.DocumentId) && MeasureReport != null) ? PatientSubmissionStatus.ReadyForValidation : Status;
         }
     }
 }
