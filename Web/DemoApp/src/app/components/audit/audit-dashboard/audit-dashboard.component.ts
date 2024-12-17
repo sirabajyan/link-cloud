@@ -51,7 +51,7 @@ export class AuditDashboardComponent implements OnInit {
   auditLogs: AuditModel[] = [];
   paginationMetadata: PaginationMetadata = new PaginationMetadata;
 
-  displayedColumns: ITableHeaderModel[] = [{ key: 'id', display: 'Id' }, { key: 'facilityId', display: 'Facility' }, { key: 'correlationId', display: 'Correlation Id' }, { key: 'serviceName', display: 'Service Name' }, { key: 'action', display: 'Action' }, { key: 'eventDate', display: 'Date' }];
+  displayedColumns: ITableHeaderModel[] = [{ key: 'id', display: 'Id' }, { key: 'facilityId', display: 'Facility' }, { key: 'correlationId', display: 'Correlation Id' }, { key: 'user', display: 'Requestor' }, { key: 'serviceName', display: 'Service Name' }, { key: 'action', display: 'Action' }, { key: 'eventDate', display: 'Date' }];
   columnsToDisplayWithExpand = [...this.displayedColumns.map(x => x.key), 'expand'];
   expandedRecord: AuditModel | null | undefined;
   dataSource = new MatTableDataSource<AuditModel>(this.auditLogs);
