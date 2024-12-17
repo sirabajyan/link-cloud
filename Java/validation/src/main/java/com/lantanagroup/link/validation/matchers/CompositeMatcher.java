@@ -1,9 +1,9 @@
 package com.lantanagroup.link.validation.matchers;
 
+import com.lantanagroup.link.validation.entities.Result;
 import lombok.Getter;
 import lombok.Setter;
 import org.apache.commons.collections4.CollectionUtils;
-import org.hl7.fhir.r4.model.OperationOutcome;
 
 import java.util.List;
 
@@ -14,19 +14,16 @@ public class CompositeMatcher extends InvertibleMatcher {
     private boolean requiresAllChildren;
 
     @Override
-    protected boolean doIsMatch(OperationOutcome.OperationOutcomeIssueComponent issue) {
+    protected boolean doIsMatch(Result result) {
         if (CollectionUtils.isEmpty(children)) {
-            throw new IllegalStateException("Composite rule must specify children");
+            throw new IllegalStateException("No children specified");
         }
+        boolean earlyReturn = !requiresAllChildren;
         for (Matcher child : children) {
-            boolean isMatch = child.isMatch(issue);
-            if (isMatch && !requiresAllChildren) {
-                return true;
-            }
-            if (!isMatch && requiresAllChildren) {
-                return false;
+            if (child.isMatch(result) == earlyReturn) {
+                return earlyReturn;
             }
         }
-        return requiresAllChildren;
+        return !earlyReturn;
     }
 }

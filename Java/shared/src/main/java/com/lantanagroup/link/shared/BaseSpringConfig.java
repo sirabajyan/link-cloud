@@ -1,10 +1,8 @@
 package com.lantanagroup.link.shared;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.lantanagroup.link.shared.auth.JwtAuthenticationEntryPoint;
 import com.lantanagroup.link.shared.auth.JwtAuthenticationFilter;
 import com.lantanagroup.link.shared.config.AuthenticationConfig;
-import com.lantanagroup.link.shared.fhir.FhirObjectMapper;
 import com.lantanagroup.link.shared.kafka.KafkaErrorHandler;
 import com.lantanagroup.link.shared.mongo.FhirConversions;
 import com.lantanagroup.link.shared.security.SecurityHelper;
@@ -40,10 +38,5 @@ public class BaseSpringConfig {
     @Bean
     MongoCustomConversions customConversions() {
         return new FhirConversions();
-    }
-
-    @Bean
-    ObjectMapper objectMapper() {
-        return new FhirObjectMapper();
     }
 }

@@ -15,7 +15,10 @@ public class CategorySnapshot {
     private Matcher matcher;
 
     public Category toCategory() {
-        Category category = new Category();
+        return toCategory(new Category());
+    }
+
+    public Category toCategory(Category category) {
         category.setId(id);
         category.setTitle(title);
         category.setSeverity(severity);

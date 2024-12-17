@@ -7,7 +7,11 @@ import jakarta.persistence.AttributeConverter;
 import java.io.UncheckedIOException;
 
 public abstract class JsonAttributeConverter<T> implements AttributeConverter<T, String> {
-    private static final ObjectMapper objectMapper = new ObjectMapper();
+    private final ObjectMapper objectMapper;
+
+    protected JsonAttributeConverter(ObjectMapper objectMapper) {
+        this.objectMapper = objectMapper;
+    }
 
     protected abstract Class<T> getAttributeClass();
 

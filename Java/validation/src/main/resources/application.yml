@@ -1,5 +1,3 @@
-artifact:
-  init: false
 loki:
   enabled: false
   url: ''
@@ -18,6 +16,9 @@ springdoc:
 spring:
   application:
     name: ValidationService
+  mvc:
+    problemdetails:
+      enabled: true
   security:
     oauth2:
       resourceserver:

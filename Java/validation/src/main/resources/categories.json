@@ -6,9 +6,8 @@
     "acceptable": true,
     "guidance": "Code display values and not usually used, except for human readability. \nAsk NHSN if they care)/validate\nAsk site/EHR about LOE to resolve",
     "matcher": {
-      "field": "DETAILS_TEXT",
-      "regex": "^Wrong Display Name '.*' for .* should be .*'.*' .*",
-      "inverted": false
+      "field": "MESSAGE",
+      "regex": "^Wrong Display Name '.*' for .* should be .*'.*' .*"
     }
   },
   {
@@ -20,18 +19,19 @@
     "matcher": {
       "children": [
         {
-          "field": "DETAILS_TEXT",
-          "regex": "^Unknown Code System '.*'$",
-          "inverted": false
+          "field": "MESSAGE",
+          "regex": "^Unknown Code System '.*'$"
         },
         {
-          "field": "DETAILS_TEXT",
-          "regex": "A code with no system .* A system should be provided",
-          "inverted": false
+          "field": "MESSAGE",
+          "regex": "A code with no system .* A system should be provided"
+        },
+        {
+          "field": "MESSAGE",
+          "regex": "^CodeSystem is unknown and can't be validated"
         }
       ],
-      "requiresAllChildren": false,
-      "inverted": false
+      "requiresAllChildren": false
     }
   },
   {
@@ -43,18 +43,15 @@
     "matcher": {
       "children": [
         {
-          "field": "DETAILS_TEXT",
-          "regex": "^URL value '.*' does not resolve",
-          "inverted": false
+          "field": "MESSAGE",
+          "regex": "^URL value '.*' does not resolve"
         },
         {
           "field": "EXPRESSION",
-          "regex": "\\.coding\\[[0-9]+\\]\\.system",
-          "inverted": false
+          "regex": "\\.coding\\[[0-9]+\\]\\.system"
         }
       ],
-      "requiresAllChildren": true,
-      "inverted": false
+      "requiresAllChildren": true
     }
   },
   {
@@ -67,17 +64,14 @@
       "children": [
         {
           "field": "SEVERITY",
-          "regex": "^error$",
-          "inverted": false
+          "regex": "^error$"
         },
         {
           "field": "CODE",
-          "regex": "^code-invalid$",
-          "inverted": false
+          "regex": "^code-invalid$"
         }
       ],
-      "requiresAllChildren": true,
-      "inverted": false
+      "requiresAllChildren": true
     }
   },
   {
@@ -87,9 +81,8 @@
     "acceptable": true,
     "guidance": "There is an issue with the way the CodeSystem is set up on the terminology server. The full code set for the system does not appear to be on the server. The terminology server should be updated.",
     "matcher": {
-      "field": "DETAILS_TEXT",
-      "regex": "^The system .* was found but did not contain enough information to properly validate the code \\(mode = fragment\\) \\(from Tx-Server\\)",
-      "inverted": false
+      "field": "MESSAGE",
+      "regex": "^The system .* was found but did not contain enough information to properly validate the code \\(mode = fragment\\) \\(from Tx-Server\\)"
     }
   },
   {
@@ -101,18 +94,15 @@
     "matcher": {
       "children": [
         {
-          "field": "DETAILS_TEXT",
-          "regex": "^Code System URI 'urn:oid:1\\.2\\.840\\.114350.*' is unknown so the code cannot be validated",
-          "inverted": false
+          "field": "MESSAGE",
+          "regex": "^Code System URI 'urn:oid:1\\.2\\.840\\.114350.*' is unknown so the code cannot be validated"
         },
         {
-          "field": "DETAILS_TEXT",
-          "regex": "^Code System URI 'https?://.*epic\\.com/.*' is unknown so the code cannot be validated",
-          "inverted": false
+          "field": "MESSAGE",
+          "regex": "^Code System URI 'https?://.*epic\\.com/.*' is unknown so the code cannot be validated"
         }
       ],
-      "requiresAllChildren": false,
-      "inverted": false
+      "requiresAllChildren": false
     }
   },
   {
@@ -122,9 +112,8 @@
     "acceptable": true,
     "guidance": "This is an Medispan proprietary Code System and is only a concern if there is not another coding that provides a standard recognized coding Code System (which is handled under another logged issue)",
     "matcher": {
-      "field": "DETAILS_TEXT",
-      "regex": "^Code System URI 'urn:oid:2\\.16\\.840\\.1\\.113883\\.6\\.68' is unknown so the code cannot be validated",
-      "inverted": false
+      "field": "MESSAGE",
+      "regex": "^Code System URI 'urn:oid:2\\.16\\.840\\.1\\.113883\\.6\\.68' is unknown so the code cannot be validated"
     }
   },
   {
@@ -136,28 +125,26 @@
     "matcher": {
       "children": [
         {
-          "field": "DETAILS_TEXT",
-          "regex": "^Code System URI '.*' is unknown so the code cannot be validated",
-          "inverted": false
+          "field": "MESSAGE",
+          "regex": "^Code System URI '.*' is unknown so the code cannot be validated"
         },
         {
-          "field": "DETAILS_TEXT",
+          "field": "MESSAGE",
           "regex": "urn:oid:1\\.2\\.840\\.114350",
           "inverted": true
         },
         {
-          "field": "DETAILS_TEXT",
+          "field": "MESSAGE",
           "regex": "https?://.+epic\\.com",
           "inverted": true
         },
         {
-          "field": "DETAILS_TEXT",
+          "field": "MESSAGE",
           "regex": "urn:oid:2\\.16\\.840\\.1\\.113883\\.6\\.68",
           "inverted": true
         }
       ],
-      "requiresAllChildren": true,
-      "inverted": false
+      "requiresAllChildren": true
     }
   },
   {
@@ -170,22 +157,18 @@
       "children": [
         {
           "field": "SEVERITY",
-          "regex": "^error$",
-          "inverted": false
+          "regex": "^error$"
         },
         {
           "field": "CODE",
-          "regex": "^code-invalid$",
-          "inverted": false
+          "regex": "^code-invalid$"
         },
         {
-          "field": "DETAILS_TEXT",
-          "regex": "^Unknown Code '.*' in the system '.*'; The provided code .* is not in the value set '.*'",
-          "inverted": false
+          "field": "MESSAGE",
+          "regex": "^Unknown Code '.*' in the system '.*'; The provided code .* is not in the value set '.*'"
         }
       ],
-      "requiresAllChildren": true,
-      "inverted": false
+      "requiresAllChildren": true
     }
   },
   {
@@ -195,9 +178,8 @@
     "acceptable": true,
     "guidance": "Systems are allowed to include extensions (additional data). Extensions that do not modify the meaning of the data (modifierExtensions) can be safely ignored. This is not a modifierExtension.",
     "matcher": {
-      "field": "DETAILS_TEXT",
-      "regex": "^The extension .* is unknown, and not allowed here$",
-      "inverted": false
+      "field": "MESSAGE",
+      "regex": "^The extension .* is unknown, and not allowed here$"
     }
   },
   {
@@ -207,9 +189,8 @@
     "acceptable": true,
     "guidance": "This could indicate an underlying issue in the resource (the resource is not validating). FHIR SME may need to review.",
     "matcher": {
-      "field": "DETAILS_TEXT",
-      "regex": "^This element does not match any known slice defined in the profile",
-      "inverted": false
+      "field": "MESSAGE",
+      "regex": "^This element does not match any known slice defined in the profile"
     }
   },
   {
@@ -219,9 +200,8 @@
     "acceptable": false,
     "guidance": "This could indicate an underlying issue in the resource (the resource is not validating). FHIR SME may need to review.",
     "matcher": {
-      "field": "DETAILS_TEXT",
-      "regex": "^Unable to find a match for profile .* among choices:",
-      "inverted": false
+      "field": "MESSAGE",
+      "regex": "^Unable to find a match for profile .* among choices:"
     }
   },
   {
@@ -231,9 +211,8 @@
     "acceptable": true,
     "guidance": "This could be indicative of a problem if the data element is part of the measure and would not enable the resource to be included in the measure calculation appropriately.",
     "matcher": {
-      "field": "DETAILS_TEXT",
-      "regex": "^None of the codings provided are in the value set '.*' .*, and a coding is recommended to come from this value set",
-      "inverted": false
+      "field": "MESSAGE",
+      "regex": "^None of the codings provided are in the value set '.*' .*, and a coding is recommended to come from this value set"
     }
   },
   {
@@ -243,9 +222,8 @@
     "acceptable": false,
     "guidance": "This could be indicative of a problem if the data element is part of the measure and would not enable the resource to be included in the measure calculation appropriately.",
     "matcher": {
-      "field": "DETAILS_TEXT",
-      "regex": "^None of the codings provided are in the value set '.*' .*, and a coding should come from this value set unless it has no suitable code \\(note that the validator cannot judge what is suitable\\)",
-      "inverted": false
+      "field": "MESSAGE",
+      "regex": "^None of the codings provided are in the value set '.*' .*, and a coding should come from this value set unless it has no suitable code \\(note that the validator cannot judge what is suitable\\)"
     }
   },
   {
@@ -255,9 +233,8 @@
     "acceptable": true,
     "guidance": "This could indicate an underlying issue in the resource (the resource is not validating). FHIR SME may need to review.",
     "matcher": {
-      "field": "DETAILS_TEXT",
-      "regex": "^Details for .* matching against Profile",
-      "inverted": false
+      "field": "MESSAGE",
+      "regex": "^Details for .* matching against Profile"
     }
   },
   {
@@ -267,9 +244,8 @@
     "acceptable": true,
     "guidance": "This is only for business identifiers. Not important, unless a business identifier, such as MRN is required to be identified.",
     "matcher": {
-      "field": "DETAILS_TEXT",
-      "regex": "^No code provided, and a code should be provided from the value set '.*' \\(http:\\/\\/hl7\\.org\\/fhir\\/ValueSet\\/identifier-type\\|4\\.0\\.1\\)",
-      "inverted": false
+      "field": "MESSAGE",
+      "regex": "^No code provided, and a code should be provided from the value set '.*' \\(http:\\/\\/hl7\\.org\\/fhir\\/ValueSet\\/identifier-type\\|4\\.0\\.1\\)"
     }
   },
   {
@@ -281,18 +257,15 @@
     "matcher": {
       "children": [
         {
-          "field": "DETAILS_TEXT",
-          "regex": "A Reference without an actual reference or identifier should have a display",
-          "inverted": false
+          "field": "MESSAGE",
+          "regex": "A Reference without an actual reference or identifier should have a display"
         },
         {
           "field": "EXPRESSION",
-          "regex": "Bundle.entry\\[\\d+\\]\\.resource\\/.*\\*\\/\\.requester",
-          "inverted": false
+          "regex": "Bundle.entry\\[\\d+\\]\\.resource\\/.*\\*\\/\\.requester"
         }
       ],
-      "requiresAllChildren": true,
-      "inverted": false
+      "requiresAllChildren": true
     }
   },
   {
@@ -304,18 +277,15 @@
     "matcher": {
       "children": [
         {
-          "field": "DETAILS_TEXT",
-          "regex": "^value should not start or finish with whitespace '.*'",
-          "inverted": false
+          "field": "MESSAGE",
+          "regex": "^value should not start or finish with whitespace '.*'"
         },
         {
           "field": "EXPRESSION",
-          "regex": "resource.*\\.identifier\\[[0-9]+\\]\\.value",
-          "inverted": false
+          "regex": "resource.*\\.identifier\\[[0-9]+\\]\\.value"
         }
       ],
-      "requiresAllChildren": true,
-      "inverted": false
+      "requiresAllChildren": true
     }
   },
   {
@@ -325,9 +295,8 @@
     "acceptable": false,
     "guidance": "The MeasureReport violates a business rule regarding MeasureScore. This issue needs to be resolved in the source data, the validator, or explicitely deemed an invalid error.",
     "matcher": {
-      "field": "DETAILS_TEXT",
-      "regex": "^No measureScore when the scoring of the message is ''cohort''",
-      "inverted": false
+      "field": "MESSAGE",
+      "regex": "^No measureScore when the scoring of the message is ''cohort''"
     }
   },
   {
@@ -339,9 +308,8 @@
     "matcher": {
       "children": [
         {
-          "field": "DETAILS_TEXT",
-          "regex": "^value should not start or finish with whitespace '.*'",
-          "inverted": false
+          "field": "MESSAGE",
+          "regex": "^value should not start or finish with whitespace '.*'"
         },
         {
           "field": "EXPRESSION",
@@ -349,8 +317,7 @@
           "inverted": true
         }
       ],
-      "requiresAllChildren": true,
-      "inverted": false
+      "requiresAllChildren": true
     }
   },
   {
@@ -360,9 +327,8 @@
     "acceptable": true,
     "guidance": "This is likely a secondary issue. If the resource can't validate then it can't be counted as meeting the slicing requirements. Likely addressing the underlying issue will make this issue go away. ",
     "matcher": {
-      "field": "DETAILS_TEXT",
-      "regex": "^Bundle.entry:.*: minimum required = .*, but only found .* \\(.*\\)",
-      "inverted": false
+      "field": "MESSAGE",
+      "regex": "^Bundle.entry:.*: minimum required = .*, but only found .* \\(.*\\)"
     }
   },
   {
@@ -374,23 +340,19 @@
     "matcher": {
       "children": [
         {
-          "field": "DETAILS_TEXT",
-          "regex": "'http:\\/\\/lantanagroup\\.com\\/fhir\\/nhsn-measures.*'",
-          "inverted": false
+          "field": "MESSAGE",
+          "regex": "'http:\\/\\/lantanagroup\\.com\\/fhir\\/nhsn-measures.*'"
         },
         {
-          "field": "DETAILS_TEXT",
-          "regex": "The value provided \\('(?:[A-Za-z]+|)'\\) is not in the value set 'USPS Two Letter Alphabetic Codes' \\(http:\\/\\/hl7\\.org\\/fhir\\/us\\/core\\/ValueSet\\/us-core-usps-state\\|(?:\\d+\\.\\d+\\.\\d+)?\\), and a code should come from this value set unless it has no suitable code \\(note that the validator cannot judge what is suitable\\)",
-          "inverted": false
+          "field": "MESSAGE",
+          "regex": "The value provided \\('(?:[A-Za-z]+|)'\\) is not in the value set 'USPS Two Letter Alphabetic Codes' \\(http:\\/\\/hl7\\.org\\/fhir\\/us\\/core\\/ValueSet\\/us-core-usps-state\\|(?:\\d+\\.\\d+\\.\\d+)?\\), and a code should come from this value set unless it has no suitable code \\(note that the validator cannot judge what is suitable\\)"
         },
         {
-          "field": "DETAILS_TEXT",
-          "regex": "Could not confirm that the codes provided are in the value set \\'.*\\' \\(http\\:\\/\\/terminology\\.hl7\\.org\\/ValueSet\\/.*\\)\\, and a code should come from this value set unless it has no suitable code .*",
-          "inverted": false
+          "field": "MESSAGE",
+          "regex": "Could not confirm that the codes provided are in the value set \\'.*\\' \\(http\\:\\/\\/terminology\\.hl7\\.org\\/ValueSet\\/.*\\)\\, and a code should come from this value set unless it has no suitable code .*"
         }
       ],
-      "requiresAllChildren": false,
-      "inverted": false
+      "requiresAllChildren": false
     }
   },
   {
@@ -402,23 +364,19 @@
     "matcher": {
       "children": [
         {
-          "field": "DETAILS_TEXT",
-          "regex": "None of the codings provided are in the value set '.*' \\(.*\\), and a coding should come from this value set unless it has no suitable code \\(note that the validator cannot judge what is suitable\\)",
-          "inverted": false
+          "field": "MESSAGE",
+          "regex": "None of the codings provided are in the value set '.*' \\(.*\\), and a coding should come from this value set unless it has no suitable code \\(note that the validator cannot judge what is suitable\\)"
         },
         {
-          "field": "DETAILS_TEXT",
-          "regex": "The value provided \\('(?:[A-Za-z]+|)'\\) is not in the value set 'USPS Two Letter Alphabetic Codes' \\(http:\\/\\/hl7\\.org\\/fhir\\/us\\/core\\/ValueSet\\/us-core-usps-state\\|(?:\\d+\\.\\d+\\.\\d+)?\\), and a code should come from this value set unless it has no suitable code \\(note that the validator cannot judge what is suitable\\)",
-          "inverted": false
+          "field": "MESSAGE",
+          "regex": "The value provided \\('(?:[A-Za-z]+|)'\\) is not in the value set 'USPS Two Letter Alphabetic Codes' \\(http:\\/\\/hl7\\.org\\/fhir\\/us\\/core\\/ValueSet\\/us-core-usps-state\\|(?:\\d+\\.\\d+\\.\\d+)?\\), and a code should come from this value set unless it has no suitable code \\(note that the validator cannot judge what is suitable\\)"
         },
         {
-          "field": "DETAILS_TEXT",
-          "regex": "Could not confirm that the codes provided are in the value set \\'.*\\' \\(http\\:\\/\\/terminology\\.hl7\\.org\\/ValueSet\\/.*\\)\\, and a code should come from this value set unless it has no suitable code .*",
-          "inverted": false
+          "field": "MESSAGE",
+          "regex": "Could not confirm that the codes provided are in the value set \\'.*\\' \\(http\\:\\/\\/terminology\\.hl7\\.org\\/ValueSet\\/.*\\)\\, and a code should come from this value set unless it has no suitable code .*"
         }
       ],
-      "requiresAllChildren": false,
-      "inverted": false
+      "requiresAllChildren": false
     }
   },
   {
@@ -428,9 +386,8 @@
     "acceptable": false,
     "guidance": "No code was provided, which if it is a concept that is part of the measure, is a problem that needs to be resolved.",
     "matcher": {
-      "field": "DETAILS_TEXT",
-      "regex": "No code provided, and a code should be provided from the value set '.*' \\(.*\\)",
-      "inverted": false
+      "field": "MESSAGE",
+      "regex": "No code provided, and a code should be provided from the value set '.*' \\(.*\\)"
     }
   },
   {
@@ -442,18 +399,15 @@
     "matcher": {
       "children": [
         {
-          "field": "DETAILS_TEXT",
-          "regex": "Canonical URL 'http://www\\.cdc\\.gov/nhsn/fhirportal/dqm/ig/Measure/.*' does not resolve",
-          "inverted": false
+          "field": "MESSAGE",
+          "regex": "Canonical URL 'http://www\\.cdc\\.gov/nhsn/fhirportal/dqm/ig/Measure/.*' does not resolve"
         },
         {
-          "field": "DETAILS_TEXT",
-          "regex": "The Measure '.*' could not be resolved, so no validation can be performed against the Measure",
-          "inverted": false
+          "field": "MESSAGE",
+          "regex": "The Measure '.*' could not be resolved, so no validation can be performed against the Measure"
         }
       ],
-      "requiresAllChildren": false,
-      "inverted": false
+      "requiresAllChildren": false
     }
   },
   {
@@ -463,9 +417,8 @@
     "acceptable": false,
     "guidance": "Needs investigation, cardinality is not being met based on profile. Reference and review profile to meet profile requirements.",
     "matcher": {
-      "field": "DETAILS_TEXT",
-      "regex": "minimum required = \\d+, but only found \\d+ \\(from http:\\/\\/www\\.cdc\\.gov\\/nhsn\\/fhirportal\\/dqm\\/ig\\/StructureDefinition\\/.+?\\)",
-      "inverted": false
+      "field": "MESSAGE",
+      "regex": "minimum required = \\d+, but only found \\d+ \\(from http:\\/\\/www\\.cdc\\.gov\\/nhsn\\/fhirportal\\/dqm\\/ig\\/StructureDefinition\\/.+?\\)"
     }
   },
   {
@@ -475,9 +428,8 @@
     "acceptable": true,
     "guidance": "The URL in the validation details is not resolvable. Link may not have the profiles/resources loaded that are represented by the canonical URL.",
     "matcher": {
-      "field": "DETAILS_TEXT",
-      "regex": "Canonical URL '.*' does not resolve",
-      "inverted": false
+      "field": "MESSAGE",
+      "regex": "Canonical URL '.*' does not resolve"
     }
   },
   {
@@ -487,9 +439,8 @@
     "acceptable": false,
     "guidance": "A date-time format must include the timezone offset for precision. Captured as +/-zzzz.",
     "matcher": {
-      "field": "DETAILS_TEXT",
-      "regex": "date has a time, it must have a timezone.*",
-      "inverted": false
+      "field": "MESSAGE",
+      "regex": "date has a time, it must have a timezone.*"
     }
   }
 ]

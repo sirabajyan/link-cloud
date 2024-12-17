@@ -1,5 +1,6 @@
 package com.lantanagroup.link.validation.entities;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.lantanagroup.link.validation.converters.MatcherConverter;
 import com.lantanagroup.link.validation.matchers.Matcher;
@@ -20,12 +21,13 @@ public class CategoryRule {
 
     @ManyToOne(optional = false)
     @JoinColumn(foreignKey = @ForeignKey(name = "fk_category_rule_category_id"))
+    @JsonIgnore
     private Category category;
-
-    @Column(nullable = false)
-    private OffsetDateTime timestamp = OffsetDateTime.now();
 
     @Convert(converter = MatcherConverter.class)
     @Column(columnDefinition = "varchar(max)", nullable = false)
     private Matcher matcher;
+
+    @Column(nullable = false)
+    private OffsetDateTime timestamp = OffsetDateTime.now();
 }

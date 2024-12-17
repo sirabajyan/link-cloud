@@ -28,24 +28,44 @@ create table category_rule
 
 create table result
 (
-    id         bigint identity not null,
-    expression varchar(1000),
-    code       varchar(255)    not null check (code in
-                                               ('INVALID', 'STRUCTURE', 'REQUIRED', 'VALUE', 'INVARIANT', 'SECURITY',
-                                                'LOGIN', 'UNKNOWN', 'EXPIRED', 'FORBIDDEN', 'SUPPRESSED', 'PROCESSING',
-                                                'NOTSUPPORTED', 'DUPLICATE', 'MULTIPLEMATCHES', 'NOTFOUND', 'DELETED',
-                                                'TOOLONG', 'CODEINVALID', 'EXTENSION', 'TOOCOSTLY', 'BUSINESSRULE',
-                                                'CONFLICT', 'TRANSIENT', 'LOCKERROR', 'NOSTORE', 'EXCEPTION', 'TIMEOUT',
-                                                'INCOMPLETE', 'THROTTLED', 'INFORMATIONAL', 'NULL')),
-    location   varchar(255),
-    message    varchar(max)    not null,
-    report_id  varchar(255)    not null,
-    severity   varchar(255)    not null check (severity in ('FATAL', 'ERROR', 'WARNING', 'INFORMATION', 'NULL')),
-    tenant_id  varchar(255)    not null,
+    id          bigint identity not null,
+    expression  varchar(1000),
+    code        varchar(255)    not null check (code in
+                                                ('INVALID', 'STRUCTURE', 'REQUIRED', 'VALUE', 'INVARIANT', 'SECURITY',
+                                                 'LOGIN', 'UNKNOWN', 'EXPIRED', 'FORBIDDEN', 'SUPPRESSED', 'PROCESSING',
+                                                 'NOTSUPPORTED', 'DUPLICATE', 'MULTIPLEMATCHES', 'NOTFOUND', 'DELETED',
+                                                 'TOOLONG', 'CODEINVALID', 'EXTENSION', 'TOOCOSTLY', 'BUSINESSRULE',
+                                                 'CONFLICT', 'TRANSIENT', 'LOCKERROR', 'NOSTORE', 'EXCEPTION',
+                                                 'TIMEOUT', 'INCOMPLETE', 'THROTTLED', 'INFORMATIONAL', 'NULL')),
+    facility_id varchar(255)    not null,
+    location    varchar(255),
+    message     varchar(max)    not null,
+    patient_id  varchar(255)    not null,
+    report_id   varchar(255)    not null,
+    severity    varchar(255)    not null check (severity in ('FATAL', 'ERROR', 'WARNING', 'INFORMATION', 'NULL')),
     primary key (id)
 );
+
+create table result_category
+(
+    result_id   bigint       not null,
+    category_id varchar(255) not null
+);
+
+alter table artifact
+    add constraint uq_artifact_type_name unique (type, name);
 
 alter table category_rule
     add constraint fk_category_rule_category_id
         foreign key (category_id)
             references category;
+
+alter table result_category
+    add constraint fk_result_category_category_id
+        foreign key (category_id)
+            references category;
+
+alter table result_category
+    add constraint fk_result_category_result_id
+        foreign key (result_id)
+            references result;
