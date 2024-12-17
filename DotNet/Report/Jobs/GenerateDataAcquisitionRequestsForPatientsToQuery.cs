@@ -48,11 +48,12 @@ namespace LantanaGroup.Link.Report.Jobs
 
         public async Task Execute(IJobExecutionContext context)
         {
+            ReportScheduleModel? schedule = null;
             try
             {
                 JobDataMap triggerMap = context.Trigger.JobDataMap!;
 
-                var schedule = (ReportScheduleModel)triggerMap[ReportConstants.MeasureReportSubmissionScheduler.ReportScheduleModel];
+                schedule = (ReportScheduleModel)triggerMap[ReportConstants.MeasureReportSubmissionScheduler.ReportScheduleModel];
 
                 //Make sure we get a fresh object from the DB
                 schedule = await _database.ReportScheduledRepository.GetAsync(schedule.Id);
@@ -161,8 +162,11 @@ namespace LantanaGroup.Link.Report.Jobs
             }
             catch (Exception ex)
             {
-                _logger.LogError(null, ex, $"Error encountered in GenerateDataAcquisitionRequestsForPatientsToQuery: {ex.Message + Environment.NewLine + ex.StackTrace}");
-                throw;
+                _logger.LogError(ex, "Exception encountered during GenerateDataAcquisitionRequestsForPatientsToQuery");
+                if (schedule != null)
+                {
+                    await MeasureReportScheduleService.RescheduleJob(schedule, await _schedulerFactory.GetScheduler());
+                }
             }
         }
     }

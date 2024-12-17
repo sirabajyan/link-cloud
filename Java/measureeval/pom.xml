@@ -96,6 +96,12 @@
         </dependency>
 
         <dependency>
+            <groupId>info.cqframework</groupId>
+            <artifactId>engine</artifactId>
+            <version>3.15.0</version>
+        </dependency>
+
+        <dependency>
             <groupId>org.opencds.cqf.fhir</groupId>
             <artifactId>cqf-fhir-cr</artifactId>
         </dependency>
@@ -133,6 +139,12 @@
         <dependency>
             <groupId>io.opentelemetry.instrumentation</groupId>
             <artifactId>opentelemetry-runtime-telemetry-java17</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>5.10.2</version>
+            <scope>test</scope>
         </dependency>
 
     </dependencies>
