@@ -53,10 +53,7 @@ public class CategorizationService {
         }
     }
 
-    public void categorize(List<Result> results) {
-        List<CategoryRule> categoryRules = categoryRepository.findAll().stream()
-                .map(Category::getLatestRule)
-                .toList();
+    private void doCategorize(List<Result> results, List<CategoryRule> categoryRules) {
         results.parallelStream().forEach(result -> {
             List<Category> categories = categoryRules.stream()
                     .filter(categoryRule -> categoryRule.getMatcher().isMatch(result))
@@ -64,5 +61,17 @@ public class CategorizationService {
                     .toList();
             result.setCategories(categories);
         });
+    }
+
+    public void categorize(List<Result> results) {
+        doCategorize(results, categoryRepository.findAll().stream()
+                .map(Category::getLatestRule)
+                .toList());
+    }
+
+    public void categorize(List<Result> results, List<CategorySnapshot> categorySnapshots) {
+        doCategorize(results, categorySnapshots.stream()
+                .map(CategorySnapshot::toCategoryRule)
+                .toList());
     }
 }

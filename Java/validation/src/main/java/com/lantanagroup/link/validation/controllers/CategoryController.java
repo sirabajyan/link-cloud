@@ -73,9 +73,8 @@ public class CategoryController {
     }
 
     private void validateCategorySnapshot(CategorySnapshot categorySnapshot, Integer index) {
-        Category category = categorySnapshot.toCategory();
-        CategoryRule categoryRule = categorySnapshot.toCategoryRule(category);
-        validateCategory(category, index);
+        CategoryRule categoryRule = categorySnapshot.toCategoryRule();
+        validateCategory(categoryRule.getCategory(), index);
         validateCategoryRule(categoryRule, index);
     }
 

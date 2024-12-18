@@ -39,6 +39,10 @@ spring:
       #security.protocol: SASL_SSL
       #sasl.mechanism: PLAIN
       #sasl.jaas.config: org.apache.kafka.common.security.plain.PlainLoginModule required username="$ConnectionString" password="";
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 100MB
 
 secret-management:
   key-vault-uri: ''

@@ -27,6 +27,10 @@ public class CategorySnapshot {
         return category;
     }
 
+    public CategoryRule toCategoryRule() {
+        return toCategoryRule(toCategory());
+    }
+
     public CategoryRule toCategoryRule(Category category) {
         CategoryRule categoryRule = new CategoryRule();
         categoryRule.setCategory(category);
