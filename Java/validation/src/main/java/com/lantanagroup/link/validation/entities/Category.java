@@ -47,7 +47,11 @@ public class Category {
 
     @JsonIgnore
     public CategoryRule getLatestRule() {
-        return getRules().stream()
+        List<CategoryRule> rules = getRules();
+        if (rules == null) {
+            return null;
+        }
+        return rules.stream()
                 .max(Comparator.comparing(CategoryRule::getTimestamp))
                 .orElse(null);
     }
