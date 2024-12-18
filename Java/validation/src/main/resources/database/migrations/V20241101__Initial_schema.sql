@@ -64,6 +64,9 @@ create index ix_result_facility_id_report_id
 create index ix_result_facility_id_report_id_patient_id
     on result (facility_id, report_id, patient_id);
 
+create index ix_result_category_result_id
+    on result_category (result_id);
+
 alter table result_category
     add constraint ix_result_category_result_id_category_id unique (result_id, category_id);
 
