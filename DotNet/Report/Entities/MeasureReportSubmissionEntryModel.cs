@@ -73,7 +73,7 @@ namespace LantanaGroup.Link.Report.Entities
                 }
             }
 
-            Status = ContainedResources.All(x => !string.IsNullOrWhiteSpace(x.DocumentId) && MeasureReport != null) ? PatientSubmissionStatus.ReadyForValidation : Status;
+            UpdateStatus();
         }
 
 
@@ -98,6 +98,11 @@ namespace LantanaGroup.Link.Report.Entities
                 containedResource.DocumentId = facilityResource.GetId();
             }
 
+            UpdateStatus();
+        }
+
+        private void UpdateStatus()
+        {
             Status = ContainedResources.All(x => !string.IsNullOrWhiteSpace(x.DocumentId) && MeasureReport != null) ? PatientSubmissionStatus.ReadyForValidation : Status;
         }
     }
