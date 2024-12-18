@@ -45,6 +45,18 @@
     alter table artifact 
        add constraint uq_artifact_type_name unique (type, name);
 
+    create index ix_result_facility_id 
+       on result (facility_id);
+
+    create index ix_result_facility_id_report_id 
+       on result (facility_id, report_id);
+
+    create index ix_result_facility_id_report_id_patient_id 
+       on result (facility_id, report_id, patient_id);
+
+    alter table result_category 
+       add constraint ix_result_category_result_id_category_id unique (result_id, category_id);
+
     alter table category_rule 
        add constraint fk_category_rule_category_id 
        foreign key (category_id) 

@@ -17,6 +17,11 @@ import java.util.function.Function;
 @Getter
 @Setter
 @Entity
+@Table(indexes = {
+        @Index(name = "ix_result_facility_id", columnList = "facility_id"),
+        @Index(name = "ix_result_facility_id_report_id", columnList = "facility_id, report_id"),
+        @Index(name = "ix_result_facility_id_report_id_patient_id", columnList = "facility_id, report_id, patient_id")
+})
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class Result {
     private static final Logger logger = LoggerFactory.getLogger(Result.class);
@@ -58,6 +63,12 @@ public class Result {
             },
             inverseJoinColumns = {
                     @JoinColumn(name = "category_id", foreignKey = @ForeignKey(name = "fk_result_category_category_id"))
+            },
+            indexes = {
+                    @Index(
+                            name = "ix_result_category_result_id_category_id",
+                            columnList = "result_id, category_id",
+                            unique = true)
             })
     private List<Category> categories;
 
