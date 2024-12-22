@@ -1,0 +1,50 @@
+# dependabot.yml file with customized commit messages and reviewers.
+# This will check for security and version updates, and open pull requests
+# for us to review and integrate into the dev branch.
+
+version: 2
+updates:
+  - &default_config
+    package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    reviewers:
+      - "lantanagroup/link-security-team"
+    assignees:
+      - "sdmcgeown"
+    # Group minor and patch security and version updates into a PR 
+    # so we don't get overwhelmed
+    groups:
+      security_updates:
+        applies-to: security-updates
+        update-types:
+          - "patch"
+          - "minor"
+      version_updates:
+        applies-to: version-updates
+        update-types:
+          - "patch"
+          - "minor"
+    labels:
+      - "security-triage-board"
+    commit-message:
+      prefix: "[npm]: "
+
+  # Repeat for docker, except override the commit message format
+  - <<: *default_config
+    package-ecosystem: "docker"
+    commit-message:
+      prefix: "[docker]: "
+
+  # Repeat for composer, except override the commit message format
+  - <<: *default_config
+    package-ecosystem: "composer"
+    commit-message:
+      prefix: "[composer]: "
+
+  # And enable version updates for GitHub Actions
+  - <<: *default_config
+    package-ecosystem: "github-actions"
+    commit-message:
+      prefix: "[github-actions]: "
