@@ -9,7 +9,7 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
-      day: "wednesday"
+      day: "tuesday"
     reviewers:
       - "@lantanagroup/link-security-team"
     assignees:
@@ -19,14 +19,10 @@ updates:
     groups:
       security_updates:
         applies-to: security-updates
-        update-types:
-          - "patch"
-          - "minor"
+        update-types: ["patch", "minor"]
       version_updates:
         applies-to: version-updates
-        update-types:
-          - "patch"
-          - "minor"
+        update-types: ["patch", "minor"]
     labels:
       - "link-security"
     commit-message:
