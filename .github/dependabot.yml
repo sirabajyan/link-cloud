@@ -28,7 +28,7 @@ updates:
           - "patch"
           - "minor"
     labels:
-      - "security-triage-board"
+      - "link-security-triage-board"
     commit-message:
       prefix: "[npm]: "
 
