@@ -45,7 +45,8 @@ using QueryDispatch.Domain.Managers;
 using QueryDispatch.Domain;
 using LantanaGroup.Link.QueryDispatch.Domain.Entities;
 using QueryDispatch.Application.Extensions;
-
+using HealthChecks.Kafka;
+using LantanaGroup.Link.Shared.Application.Health;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -148,7 +149,7 @@ builder.Services.AddTransient<IScheduledReportManager, ScheduledReportManager>()
 
 //Excepation Handlers
 builder.Services.AddTransient<IDeadLetterExceptionHandler<string, PatientEventValue>, DeadLetterExceptionHandler<string, PatientEventValue>>();
-builder.Services.AddTransient<IDeadLetterExceptionHandler<ReportScheduledKey, ReportScheduledValue>, DeadLetterExceptionHandler<ReportScheduledKey, ReportScheduledValue>>();
+builder.Services.AddTransient<IDeadLetterExceptionHandler<string, ReportScheduledValue>, DeadLetterExceptionHandler<string, ReportScheduledValue>>();
 builder.Services.AddTransient<IDeadLetterExceptionHandler<string, string>, DeadLetterExceptionHandler<string, string>>();
 builder.Services.AddTransient<ITransientExceptionHandler<string, PatientEventValue>, TransientExceptionHandler<string, PatientEventValue>>();
 
@@ -244,8 +245,11 @@ builder.Services.AddSwaggerGen(c =>
 });
 
 //Add health checks
+var kafkaHealthOptions = new KafkaHealthCheckConfiguration(kafkaConnection, QueryDispatchConstants.ServiceName).GetHealthCheckOptions();
+
 builder.Services.AddHealthChecks()
-    .AddDbContextCheck<QueryDispatchDbContext>();
+    .AddDbContextCheck<QueryDispatchDbContext>()
+    .AddKafka(kafkaHealthOptions);
 
 // Logging using Serilog
 builder.Logging.AddSerilog();

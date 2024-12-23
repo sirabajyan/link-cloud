@@ -9,6 +9,7 @@ using Quartz;
 using System.Diagnostics;
 using LantanaGroup.Link.Shared.Application.Enums;
 using LantanaGroup.Link.Shared.Application.Models.Responses;
+using LantanaGroup.Link.Tenant.Interfaces;
 
 namespace LantanaGroup.Link.Tenant.Controllers
 {
@@ -18,7 +19,7 @@ namespace LantanaGroup.Link.Tenant.Controllers
     public class FacilityController : ControllerBase
     {
 
-        private readonly FacilityConfigurationService _facilityConfigurationService;
+        private readonly IFacilityConfigurationService _facilityConfigurationService;
 
         private readonly IMapper _mapperModelToDto;
 
@@ -27,33 +28,28 @@ namespace LantanaGroup.Link.Tenant.Controllers
         private readonly ILogger<FacilityController> _logger;
 
         private readonly ISchedulerFactory _schedulerFactory;
-        public IScheduler _scheduler { get; set; }
 
 
-        public FacilityController(ILogger<FacilityController> logger, FacilityConfigurationService facilityConfigurationService, ISchedulerFactory schedulerFactory)
+        public FacilityController(ILogger<FacilityController> logger, IFacilityConfigurationService facilityConfigurationService, ISchedulerFactory schedulerFactory)
         {
 
             _facilityConfigurationService = facilityConfigurationService;
             _schedulerFactory = schedulerFactory;
             _logger = logger;
-            _scheduler = _schedulerFactory.GetScheduler().Result;
+            _schedulerFactory = schedulerFactory;
 
             var configModelToDto = new MapperConfiguration(cfg =>
             {
                 cfg.CreateMap<FacilityConfigModel, FacilityConfigDto>();
                 cfg.CreateMap<PagedConfigModel<FacilityConfigModel>, PagedFacilityConfigDto>();
-                cfg.CreateMap<ScheduledTaskModel.ReportTypeSchedule, ScheduledTaskDto.ReportTypeDtoSchedule>();
-                cfg.CreateMap<ScheduledTaskModel, ScheduledTaskDto>();
-                cfg.CreateMap<MonthlyReportingPlanModel, MonthlyReportingPlanDto>();
+                cfg.CreateMap<ScheduledReportModel, ScheduledReportDto>();
             });
 
             var configDtoToModel = new MapperConfiguration(cfg =>
             {
                 cfg.CreateMap<FacilityConfigDto, FacilityConfigModel>();
                 cfg.CreateMap<PagedFacilityConfigDto, PagedConfigModel<FacilityConfigModel>>();
-                cfg.CreateMap<ScheduledTaskDto.ReportTypeDtoSchedule, ScheduledTaskModel.ReportTypeSchedule>();
-                cfg.CreateMap<ScheduledTaskDto, ScheduledTaskModel>();
-                cfg.CreateMap<MonthlyReportingPlanDto, MonthlyReportingPlanModel>();
+                cfg.CreateMap<ScheduledReportDto, ScheduledReportModel>();
             });
 
             _mapperModelToDto = configModelToDto.CreateMapper();
@@ -95,8 +91,6 @@ namespace LantanaGroup.Link.Tenant.Controllers
             }
             if (pagedFacilityConfigModelDto.Records.Count == 0)
             {
-                _logger.LogError("No Facilities Found");
-
                 return NoContent();
             }
             return Ok(pagedFacilityConfigModelDto);
@@ -114,8 +108,6 @@ namespace LantanaGroup.Link.Tenant.Controllers
         [HttpPost]
         public async Task<IActionResult> StoreFacility(FacilityConfigDto newFacility, CancellationToken cancellationToken)
         {
-            _logger.LogInformation($"Store Facility with Id: {newFacility.Id} and Facility Name: {newFacility.FacilityName}");
-
             FacilityConfigModel facilityConfigModel = _mapperDtoToModel.Map<FacilityConfigDto, FacilityConfigModel>(newFacility);
 
             try
@@ -125,21 +117,19 @@ namespace LantanaGroup.Link.Tenant.Controllers
             }
             catch (ApplicationException ex)
             {
-                _logger.LogError($"Store facility exception: {ex.Message}");
-
                 return BadRequest(ex.Message);
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Exception is: {ex.Message}");
-
-                throw;
+                _logger.LogError(ex, "Exception Encountered in FacilityController.StoreFacility");
+                return Problem("An error occurred while storing the facility", null, 500);
             }
 
             // create jobs for the new Facility
             using (ServiceActivitySource.Instance.StartActivity("Add Jobs for Facility"))
             {
-                await ScheduleService.AddJobsForFacility(facilityConfigModel, _scheduler);
+                var scheduler = await _schedulerFactory.GetScheduler(cancellationToken);
+                await ScheduleService.AddJobsForFacility(facilityConfigModel, scheduler);
             }
 
             return CreatedAtAction(nameof(StoreFacility), new { id = facilityConfigModel.Id }, facilityConfigModel);
@@ -158,18 +148,15 @@ namespace LantanaGroup.Link.Tenant.Controllers
         [HttpGet("{facilityId}")]
         public async Task<ActionResult<FacilityConfigDto>> LookupFacilityById(string facilityId, CancellationToken cancellationToken)
         {
-            _logger.LogInformation($"Get Facility with Facility Id: {facilityId} ");
-
             using Activity? activity = ServiceActivitySource.Instance.StartActivity("Get Facility By Facility Id");
 
-            FacilityConfigModel facility = await _facilityConfigurationService.GetFacilityByFacilityId(facilityId, cancellationToken);
+            var facility = await _facilityConfigurationService.GetFacilityByFacilityId(facilityId, cancellationToken);
 
-            if (facility is null)
+            if (facility == null)
             {
-                _logger.LogError($"Facility with Id: {facilityId} Not Found");
-
                 return NotFound($"Facility with Id: {facilityId} Not Found");
             }
+
             FacilityConfigDto? dest = null;
 
             using (ServiceActivitySource.Instance.StartActivity("Map Result"))
@@ -195,54 +182,52 @@ namespace LantanaGroup.Link.Tenant.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateFacility(string id, FacilityConfigDto updatedFacility, CancellationToken cancellationToken)
         {
-            _logger.LogInformation($"Update Facility with Id: {updatedFacility.Id} and Facility Name: {updatedFacility.FacilityName}");
-
             FacilityConfigModel dest = _mapperDtoToModel.Map<FacilityConfigDto, FacilityConfigModel>(updatedFacility);
-
-            FacilityConfigModel existingFacility = await _facilityConfigurationService.GetFacilityById(id, cancellationToken);
 
             // validate id and updatedFacility.id match
             if (id.ToString() != updatedFacility.Id)
             {
-                _logger.LogError($" {id} in the url and the {updatedFacility.Id} in the payload mismatch");
-
                 return BadRequest($" {id} in the url and the {updatedFacility.Id} in the payload mismatch");
             }
+
+             FacilityConfigModel oldFacility = await _facilityConfigurationService.GetFacilityById(id, cancellationToken);
+
+             FacilityConfigModel clonedFacility = oldFacility?.ShallowCopy();
+
             try
             {
-
                 await _facilityConfigurationService.UpdateFacility(id, dest, cancellationToken);
             }
             catch (ApplicationException ex)
             {
-                _logger.LogError($"Exception: {ex.Message}");
-
                 return BadRequest(ex.Message);
             }
             catch (Exception ex)
             {
-                _logger.LogError("Exception is: " + ex.Message);
-
-                throw;
+                _logger.LogError(ex, "Exception Encountered in FacilityController.UpdateFacility");
+                return Problem("An error occurred while updating the facility", null, 500);
             }
 
-            // if existingFacility is not null, then update the jobs, else add new jobs
-            if (existingFacility != null)
+            var scheduler = await _schedulerFactory.GetScheduler(cancellationToken);
+
+            // if clonedFacility is not null, then update the jobs, else add new jobs
+
+            if (clonedFacility != null)
             {
                 using (ServiceActivitySource.Instance.StartActivity("Update Jobs for Facility"))
                 {
-                    await ScheduleService.UpdateJobsForFacility(dest, existingFacility, _scheduler);
+                    await ScheduleService.UpdateJobsForFacility(dest, clonedFacility, scheduler);
                 }
             }
             else
             {
                 using (ServiceActivitySource.Instance.StartActivity("Create Jobs for Facility"))
                 {
-                    await ScheduleService.AddJobsForFacility(dest, _scheduler);
+                    await ScheduleService.AddJobsForFacility(dest, scheduler);
                 }
             }
 
-            if (existingFacility == null)
+            if (oldFacility == null)
             {
                 return CreatedAtAction(nameof(StoreFacility), new { id = dest.Id }, dest);
             }
@@ -261,9 +246,6 @@ namespace LantanaGroup.Link.Tenant.Controllers
         [HttpDelete("{facilityId}")]
         public async Task<IActionResult> DeleteFacility(string facilityId, CancellationToken cancellationToken)
         {
-
-            _logger.LogInformation($"Delete Facility with Facility Id: {facilityId}");
-
             FacilityConfigModel existingFacility = _facilityConfigurationService.GetFacilityByFacilityId(facilityId, cancellationToken).Result;
 
             try
@@ -272,14 +254,18 @@ namespace LantanaGroup.Link.Tenant.Controllers
             }
             catch (ApplicationException ex)
             {
-                _logger.LogError("Exception: " + ex.Message);
-
                 return BadRequest(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Exception Encountered in FacilityController.DeleteFacility");
+                return Problem("An error occurred while deleting the facility", null, 500);
             }
 
             using (ServiceActivitySource.Instance.StartActivity("Delete Jobs for Facility"))
             {
-                await ScheduleService.DeleteJobsForFacility(existingFacility.Id.ToString(), existingFacility.ScheduledTasks, _scheduler);
+                var scheduler = await _schedulerFactory.GetScheduler(cancellationToken);
+                await ScheduleService.DeleteJobsForFacility(existingFacility.Id.ToString(), scheduler);
             }
 
             return NoContent();

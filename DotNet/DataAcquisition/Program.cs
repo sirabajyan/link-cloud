@@ -51,6 +51,8 @@ using LantanaGroup.Link.Shared.Application;
 using LantanaGroup.Link.Shared.Application.Utilities;
 using Hl7.Fhir.Serialization;
 using Hl7.Fhir.Model;
+using LantanaGroup.Link.Shared.Application.Health;
+using LantanaGroup.Link.DataAcquisition.Application.Managers;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -170,7 +172,7 @@ static void RegisterServices(WebApplicationBuilder builder)
     builder.Services.AddTransient<IEntityRepository<FhirQueryConfiguration>, DataEntityRepository<FhirQueryConfiguration>>();
     builder.Services.AddTransient<IEntityRepository<QueryPlan>, DataEntityRepository<QueryPlan>>();
     builder.Services.AddTransient<IEntityRepository<ReferenceResources>, DataEntityRepository<ReferenceResources>>();
-    builder.Services.AddTransient<IEntityRepository<QueriedFhirResourceRecord>, DataEntityRepository<QueriedFhirResourceRecord>>();
+    builder.Services.AddTransient<IEntityRepository<FhirQuery>, DataEntityRepository<FhirQuery>>();
 
     builder.Services.AddScoped<IEntityRepository<RetryEntity>, DataEntityRepository<RetryEntity>>();
 
@@ -181,7 +183,7 @@ static void RegisterServices(WebApplicationBuilder builder)
     builder.Services.AddTransient<IFhirQueryListConfigurationManager, FhirQueryListConfigurationManager>();
     builder.Services.AddTransient<IQueryPlanManager, QueryPlanManager>();
     builder.Services.AddTransient<IReferenceResourcesManager, ReferenceResourcesManager>();
-    builder.Services.AddTransient<IQueriedFhirResourceManager, QueriedFhirResourceManager>();
+    builder.Services.AddTransient<IFhirQueryManager, FhirQueryManager>();
 
     //Services
     builder.Services.AddTransient<ITenantApiService, TenantApiService>();
@@ -338,8 +340,12 @@ static void RegisterServices(WebApplicationBuilder builder)
     });
 
     //Add Health Check
+    var kafkaConnection = builder.Configuration.GetRequiredSection(KafkaConstants.SectionName).Get<KafkaConnection>();
+    var kafkaHealthOptions = new KafkaHealthCheckConfiguration(kafkaConnection, DataAcquisitionConstants.ServiceName).GetHealthCheckOptions();
+
     builder.Services.AddHealthChecks()
-        .AddDbContextCheck<DataAcquisitionDbContext>();
+        .AddDbContextCheck<DataAcquisitionDbContext>()
+        .AddKafka(kafkaHealthOptions);
 
     builder.Services.AddSingleton(TimeProvider.System);
     builder.Services.AddSingleton<IDataAcquisitionServiceMetrics, DataAcquisitionServiceMetrics>();

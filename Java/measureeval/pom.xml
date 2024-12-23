@@ -75,6 +75,11 @@
         </dependency>
 
         <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-collections4</artifactId>
+        </dependency>
+
+        <dependency>
             <groupId>ca.uhn.hapi.fhir</groupId>
             <artifactId>hapi-fhir-base</artifactId>
         </dependency>
@@ -88,6 +93,12 @@
             <groupId>ca.uhn.hapi.fhir</groupId>
             <artifactId>hapi-fhir-caching-caffeine</artifactId>
             <scope>runtime</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>info.cqframework</groupId>
+            <artifactId>engine</artifactId>
+            <version>3.15.0</version>
         </dependency>
 
         <dependency>
@@ -129,6 +140,12 @@
             <groupId>io.opentelemetry.instrumentation</groupId>
             <artifactId>opentelemetry-runtime-telemetry-java17</artifactId>
         </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>5.10.2</version>
+            <scope>test</scope>
+        </dependency>
 
     </dependencies>
 
@@ -146,6 +163,7 @@
                     </execution>
                 </executions>
                 <configuration>
+                    <mainClass>${mainClass}</mainClass>
                     <excludes>
                         <exclude>
                             <groupId>org.projectlombok</groupId>
@@ -156,4 +174,27 @@
             </plugin>
         </plugins>
     </build>
+
+    <profiles>
+        <profile>
+            <id>api</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <properties>
+                <mainClass>com.lantanagroup.link.measureeval.MeasureEvalApplication</mainClass>
+            </properties>
+        </profile>
+
+        <profile>
+            <id>cli</id>
+            <properties>
+                <mainClass>com.lantanagroup.link.measureeval.FileSystemInvocation</mainClass>
+                <logback.configurationFile>src/main/resources/logback-cli.xml</logback.configurationFile>
+            </properties>
+            <build>
+                <finalName>measureeval-cli</finalName>
+            </build>
+        </profile>
+    </profiles>
 </project>

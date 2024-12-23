@@ -30,6 +30,7 @@ using LantanaGroup.Link.Shared.Application.Models;
 using LantanaGroup.Link.Shared.Application.Middleware;
 using LantanaGroup.Link.Shared.Application.Factories;
 using Confluent.Kafka;
+using LantanaGroup.Link.Shared.Application.Health;
 
 namespace Tenant
 {
@@ -83,6 +84,18 @@ namespace Tenant
                 }
             }
 
+            // Add Link Security
+            bool allowAnonymousAccess = builder.Configuration.GetValue<bool>("Authentication:EnableAnonymousAccess");
+            builder.Services.AddLinkBearerServiceAuthentication(options =>
+            {
+                options.Environment = builder.Environment;
+                options.AllowAnonymous = allowAnonymousAccess;
+                options.Authority = builder.Configuration.GetValue<string>("Authentication:Schemas:LinkBearer:Authority");
+                options.ValidateToken = builder.Configuration.GetValue<bool>("Authentication:Schemas:LinkBearer:ValidateToken");
+                options.ProtectKey = builder.Configuration.GetValue<bool>("DataProtection:Enabled");
+                options.SigningKey = builder.Configuration.GetValue<string>("LinkTokenService:SigningKey");
+            });
+
             var serviceInformation = builder.Configuration.GetRequiredSection(TenantConstants.AppSettingsSectionNames.ServiceInformation).Get<ServiceInformation>();
             if (serviceInformation != null)
             {
@@ -103,7 +116,7 @@ namespace Tenant
             builder.Services.Configure<CorsSettings>(builder.Configuration.GetSection(ConfigurationConstants.AppSettings.CORS));
             builder.Services.Configure<LinkTokenServiceSettings>(builder.Configuration.GetSection(ConfigurationConstants.AppSettings.LinkTokenService));
 
-            builder.Services.AddScoped<FacilityConfigurationService>();
+            builder.Services.AddScoped<IFacilityConfigurationService, FacilityConfigurationService>();
             builder.Services.AddScoped<IFacilityConfigurationRepo, FacilityConfigurationRepo>();
 
             builder.Services.AddSingleton<UpdateBaseEntityInterceptor>();
@@ -172,20 +185,11 @@ namespace Tenant
 
 
             //Add health checks
-            builder.Services.AddHealthChecks()
-                .AddCheck<DatabaseHealthCheck>("Database");
+            var kafkaHealthOptions = new KafkaHealthCheckConfiguration(kafkaConnection, TenantConstants.ServiceName).GetHealthCheckOptions();
 
-            // Add Link Security
-            bool allowAnonymousAccess = builder.Configuration.GetValue<bool>("Authentication:EnableAnonymousAccess");
-            builder.Services.AddLinkBearerServiceAuthentication(options =>
-            {
-                options.Environment = builder.Environment;
-                options.AllowAnonymous = allowAnonymousAccess;
-                options.Authority = builder.Configuration.GetValue<string>("Authentication:Schemas:LinkBearer:Authority");
-                options.ValidateToken = builder.Configuration.GetValue<bool>("Authentication:Schemas:LinkBearer:ValidateToken");
-                options.ProtectKey = builder.Configuration.GetValue<bool>("DataProtection:Enabled");
-                options.SigningKey = builder.Configuration.GetValue<string>("LinkTokenService:SigningKey");
-            });
+            builder.Services.AddHealthChecks()
+                .AddCheck<DatabaseHealthCheck>("Database")
+                .AddKafka(kafkaHealthOptions);
 
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
@@ -245,6 +249,8 @@ namespace Tenant
         {
             // Configure the HTTP request pipeline.
             app.ConfigureSwagger();
+
+            app.AutoMigrateEF<FacilityDbContext>();
 
             app.UseRouting();            
             app.UseCors(CorsSettings.DefaultCorsPolicyName);

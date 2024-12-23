@@ -1,8 +1,8 @@
-artifact:
-  init: true
 loki:
   enabled: false
   url: ''
+  app: link-cloud
+
 server:
   port: 31820
 
@@ -16,6 +16,9 @@ springdoc:
 spring:
   application:
     name: ValidationService
+  mvc:
+    problemdetails:
+      enabled: true
   security:
     oauth2:
       resourceserver:
@@ -25,13 +28,6 @@ spring:
   #  url: jdbc:sqlserver://;serverName=localhost\SQLEXPRESS;encrypt=true;trustServerCertificate=true
   #  username: link-user
   #  password: link-password
-  jpa:
-    hibernate:
-      ddl-auto: none
-    properties:
-      show_sql: true
-      hibernate:
-        dialect: org.hibernate.dialect.SQLServerDialect
   kafka:
     bootstrap-servers: ''
     consumer:
@@ -43,6 +39,10 @@ spring:
       #security.protocol: SASL_SSL
       #sasl.mechanism: PLAIN
       #sasl.jaas.config: org.apache.kafka.common.security.plain.PlainLoginModule required username="$ConnectionString" password="";
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 100MB
 
 secret-management:
   key-vault-uri: ''

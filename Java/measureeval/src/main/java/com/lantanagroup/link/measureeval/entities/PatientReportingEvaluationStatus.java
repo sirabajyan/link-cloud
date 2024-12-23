@@ -3,8 +3,6 @@ package com.lantanagroup.link.measureeval.entities;
 import com.fasterxml.jackson.annotation.JsonSetter;
 import com.fasterxml.jackson.annotation.Nulls;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.lantanagroup.link.measureeval.models.NormalizationStatus;
-import com.lantanagroup.link.measureeval.models.QueryType;
 import com.lantanagroup.link.measureeval.serdes.FhirIdDeserializer;
 import lombok.Getter;
 import lombok.Setter;
@@ -29,6 +27,8 @@ public class PatientReportingEvaluationStatus {
     @JsonDeserialize(using = FhirIdDeserializer.class)
     private String patientId;
 
+    private String reportableEvent;
+
     @JsonSetter(nulls = Nulls.AS_EMPTY)
     private List<Report> reports = new ArrayList<>();
 
@@ -52,6 +52,7 @@ public class PatientReportingEvaluationStatus {
         private Date startDate;
         private Date endDate;
         private Boolean reportable;
+        private String frequency;
     }
 
     @Getter

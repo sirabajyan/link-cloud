@@ -3,10 +3,11 @@
 
     <springProperty scope="context" name="loki_enabled" source="loki.enabled"/>
     <springProperty scope="context" name="loki_url" source="loki.url"/>
+    <springProperty scope="context" name="loki_app" source="loki.app" />
 
     <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
-            <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+            <pattern>%date [%-10.10thread] %-5level %-40.40logger{40} %message%n</pattern>
         </encoder>
     </appender>
 
@@ -18,7 +19,7 @@
                 </http>
                 <format>
                     <label>
-                        <pattern>app=link-cloud,component=MeasureEval,TraceId="%X{traceId}",SpanId="%X{spanId}"</pattern>
+                        <pattern>app=${loki_app},component=MeasureEval,TraceId="%X{traceId}",SpanId="%X{spanId}"</pattern>
                         <readMarkers>true</readMarkers>
                     </label>
                     <message>
@@ -42,16 +43,16 @@
 
     <if condition='property("loki_enabled").equalsIgnoreCase("true")'>
         <then>
-            <logger name="com.lantanagroup.link.measureeval.services" level="WARN"/>
-            <root level="WARN">
+            <logger name="com.lantanagroup.link" level="DEBUG"/>
+            <root level="INFO">
                 <appender-ref ref="STDOUT"/>
                 <appender-ref ref="LOKI"/>
             </root>
 
         </then>
         <else>
-            <logger name="com.lantanagroup.link.measureeval.services" level="WARN"/>
-            <root level="WARN">
+            <logger name="com.lantanagroup.link" level="DEBUG"/>
+            <root level="INFO">
                 <appender-ref ref="STDOUT"/>
             </root>
         </else>
