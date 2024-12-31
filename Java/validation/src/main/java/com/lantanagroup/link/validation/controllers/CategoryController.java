@@ -20,7 +20,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping("/api/category")
+@RequestMapping("/categories")
 @SecurityRequirement(name = "bearer-key")
 public class CategoryController {
     private static final Logger log = org.slf4j.LoggerFactory.getLogger(CategoryController.class);

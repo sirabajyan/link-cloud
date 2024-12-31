@@ -16,7 +16,6 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/validation")
 @SecurityRequirement(name = "bearer-key")
 public class ValidationController {
     private static final Logger log = LoggerFactory.getLogger(ValidationController.class);
@@ -33,7 +32,7 @@ public class ValidationController {
             tags = {"Validation"},
             operationId = "reloadArtifacts"
     )
-    @PostMapping("/reload")
+    @PostMapping("/artifacts/reload")
     public void reloadArtifacts() {
         log.info("Reloading artifacts in validation service");
         this.validationService.initArtifacts();
@@ -45,7 +44,7 @@ public class ValidationController {
             tags = {"Validation"},
             operationId = "validateResource"
     )
-    @PostMapping("/validate")
+    @PostMapping("validation/validate")
     public OperationOutcome validate(@RequestBody Bundle bundle) {
         log.info("Validating bundle with ID {}", bundle.hasId() ? bundle.getIdElement().getIdPart() : "UNKNOWN");
         List<ResultModel> results = this.validationService.validate(bundle);

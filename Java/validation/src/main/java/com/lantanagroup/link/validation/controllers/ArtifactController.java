@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/artifact")
+@RequestMapping("/artifacts")
 @SecurityRequirement(name = "bearer-key")
 public class ArtifactController {
     private final ArtifactService artifactService;
@@ -24,7 +24,7 @@ public class ArtifactController {
             tags = {"Artifacts"},
             operationId = "createOrUpdateArtifact"
     )
-    @PutMapping("/{type}")
+    @PutMapping("types/{type}")
     public void createOrUpdateArtifact(@PathVariable("type") ArtifactEntity.Types type, @RequestParam String name, @RequestBody byte[] content) {
         this.artifactService.createOrUpdateArtifact(name, type, content);
     }
@@ -35,7 +35,7 @@ public class ArtifactController {
             tags = {"Artifacts"},
             operationId = "deleteArtifact"
     )
-    @DeleteMapping("/{type}/{name}")
+    @DeleteMapping("types/{type}/{name}")
     public void deleteArtifact(@PathVariable("type") ArtifactEntity.Types type, @PathVariable("name") String name) {
         this.artifactService.deleteArtifact(type, name);
     }
