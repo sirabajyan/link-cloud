@@ -88,10 +88,10 @@ public class CategoryController {
         }
     }
 
-    @Operation(summary = "Creates or updates categories and rules")
-    @PostMapping("/$bulk-save")
+    @Operation(summary = "Imports categories and rules")
+    @PostMapping("/$bulk-import")
     @Transactional
-    public void bulkSaveCategories(@RequestBody List<CategorySnapshot> categorySnapshots) {
+    public void bulkImportCategories(@RequestBody List<CategorySnapshot> categorySnapshots) {
         if (CollectionUtils.isEmpty(categorySnapshots)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "No categories provided");
         }
@@ -112,6 +112,14 @@ public class CategoryController {
         for (CategorySnapshot categorySnapshot : categorySnapshots) {
             categorizationService.saveCategorySnapshot(categorySnapshot);
         }
+    }
+
+    @Operation(summary = "Exports categories and rules")
+    @GetMapping("/$bulk-export")
+    public List<CategorySnapshot> bulkExportCategories() {
+        return categoryRepository.findAll().stream()
+                .map(CategorySnapshot::new)
+                .toList();
     }
 
     @Operation(summary = "Gets all categories")
