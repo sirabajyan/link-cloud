@@ -14,6 +14,21 @@ public class CategorySnapshot {
     private String guidance;
     private Matcher matcher;
 
+    public CategorySnapshot() {
+    }
+
+    public CategorySnapshot(Category category) {
+        id = category.getId();
+        title = category.getTitle();
+        severity = category.getSeverity();
+        acceptable = category.isAcceptable();
+        guidance = category.getGuidance();
+        CategoryRule latestRule = category.getLatestRule();
+        if (latestRule != null) {
+            matcher = latestRule.getMatcher();
+        }
+    }
+
     public Category toCategory() {
         return toCategory(new Category());
     }
