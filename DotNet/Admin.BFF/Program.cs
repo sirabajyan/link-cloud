@@ -25,6 +25,7 @@ using LantanaGroup.Link.LinkAdmin.BFF.Infrastructure.Extensions.Telemetry;
 using LantanaGroup.Link.Shared.Application.Extensions;
 using LantanaGroup.Link.Shared.Settings;
 using LantanaGroup.Link.LinkAdmin.BFF.Application.Interfaces.Infrastructure;
+using LantanaGroup.Link.LinkAdmin.BFF.Application.Swagger;
 using LantanaGroup.Link.LinkAdmin.BFF.Infrastructure.Telemetry;
 using LantanaGroup.Link.Shared.Application.Middleware;
 using LantanaGroup.Link.Shared.Application.Extensions.ExternalServices;
@@ -56,7 +57,7 @@ static void RegisterServices(WebApplicationBuilder builder)
         });
     }
 
-    // Logging using Serilog    
+    // Logging using Serilog
     builder.Logging.AddSerilog();
     var loggerOptions = new ConfigurationReaderOptions { SectionName = LinkAdminConstants.AppSettingsSectionNames.Serilog };
     Log.Logger = new LoggerConfiguration()
@@ -73,12 +74,12 @@ static void RegisterServices(WebApplicationBuilder builder)
 
     //Initialize activity source
     var version = Assembly.GetExecutingAssembly().GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion ?? string.Empty;
-    ServiceActivitySource.Initialize(version); 
+    ServiceActivitySource.Initialize(version);
 
     // Add problem details
     builder.Services.AddProblemDetailsService(options =>
     {
-        options.Environment = builder.Environment;  
+        options.Environment = builder.Environment;
         options.ServiceName = LinkAdminConstants.ServiceName;
         options.IncludeExceptionDetails = builder.Configuration.GetValue<bool>("ProblemDetails:IncludeExceptionDetails");
     });
@@ -89,6 +90,7 @@ static void RegisterServices(WebApplicationBuilder builder)
     builder.Services.Configure<ServiceRegistry>(builder.Configuration.GetSection(ServiceRegistry.ConfigSectionName));
     builder.Services.Configure<LinkTokenServiceSettings>(builder.Configuration.GetSection(ConfigurationConstants.AppSettings.LinkTokenService));
     builder.Services.Configure<CacheSettings>(builder.Configuration.GetSection(ConfigurationConstants.AppSettings.Cache));
+    builder.Services.Configure<ServiceSpecAppenderConfig>(builder.Configuration.GetSection(ServiceSpecAppenderConfig.ConfigSectionName));
 
     // Determine if anonymous access is allowed
     var allowAnonymousAccess = builder.Configuration.GetValue<bool>("Authentication:EnableAnonymousAccess");
@@ -123,7 +125,7 @@ static void RegisterServices(WebApplicationBuilder builder)
     builder.Services.AddTransient<KafkaConsumerManager>();
     builder.Services.AddTransient<KafkaConsumerService>();
 
-    //Add Redis   
+    //Add Redis
     if (builder.Configuration.GetValue<bool>("Cache:Enabled"))
     {
         Log.Logger.Information("Registering Redis Cache for the Link Admin API.");
@@ -144,7 +146,7 @@ static void RegisterServices(WebApplicationBuilder builder)
                 options.Timeout = builder.Configuration.GetValue<int>("Cache:Timeout");
             }
         });
-    }    
+    }
 
     // Add Secret Manager
     if (builder.Configuration.GetValue<bool>("SecretManagement:Enabled"))
@@ -157,7 +159,7 @@ static void RegisterServices(WebApplicationBuilder builder)
         });
     }
 
-    // Add Link Security    
+    // Add Link Security
     if (!allowAnonymousAccess)
     {
         Log.Logger.Information("Registering Link Gateway Security for the Link Admin API.");
@@ -170,7 +172,7 @@ static void RegisterServices(WebApplicationBuilder builder)
     {
         Log.Logger.Information("Enabling anonymous access for the Link Admin API.");
         //create anonymous access
-        builder.Services.AddAuthorizationBuilder()        
+        builder.Services.AddAuthorizationBuilder()
             .AddPolicy("AuthenticatedUser", pb =>
             {
                 pb.RequireAssertion(_ => true);
@@ -215,7 +217,7 @@ static void RegisterServices(WebApplicationBuilder builder)
         {
             builder.Services.AddTransient<IApi, BearerServiceEndpoints>();
         }
-    }    
+    }
     if (builder.Configuration.GetValue<bool>("EnableIntegrationFeature"))
     {
         builder.Services.AddTransient<IApi, IntegrationTestingEndpoints>();
@@ -244,10 +246,9 @@ static void RegisterServices(WebApplicationBuilder builder)
     {
         healthCheckBuilder.AddCheck<CacheHealthCheck>("Cache");
     }
-
-
+    
     // Add swagger generation
-    builder.Services.AddEndpointsApiExplorer();    
+    builder.Services.AddEndpointsApiExplorer();
     builder.Services.AddSwaggerGen(c =>
     {
         if (!allowAnonymousAccess)
@@ -328,19 +329,19 @@ static void RegisterServices(WebApplicationBuilder builder)
         var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
         var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
         c.IncludeXmlComments(xmlPath);
-
-    });   
+        c.DocumentFilter<ServiceSpecAppender>();
+    });
 
     // Add logging redaction services
     Log.Logger.Information("Adding Redaction Service for the Link Admin API.");
     builder.Services.AddRedactionService(options =>
     {
         options.HmacKey = builder.Configuration.GetValue<string>("Logging:HmacKey");
-    });    
+    });
 
     // Add YARP (reverse proxy)
     Log.Logger.Information("Registering YARP for the Link Admin API.");
-    builder.Services.AddYarpProxy(builder.Configuration, Log.Logger, options => options.Environment = builder.Environment); 
+    builder.Services.AddYarpProxy(builder.Configuration, Log.Logger, options => options.Environment = builder.Environment);
 
     //Add telemetry if enabled
     Log.Logger.Information("Registering Open Telemetry for the Link Admin API.");
@@ -348,10 +349,10 @@ static void RegisterServices(WebApplicationBuilder builder)
     {
         options.Environment = builder.Environment;
         options.ServiceName = LinkAdminConstants.ServiceName;
-        options.ServiceVersion = ServiceActivitySource.Version; //TODO: Get version from assembly?                
+        options.ServiceVersion = ServiceActivitySource.Version; //TODO: Get version from assembly?
     });
 
-    builder.Services.AddSingleton<ILinkAdminMetrics, LinkAdminMetrics>();    
+    builder.Services.AddSingleton<ILinkAdminMetrics, LinkAdminMetrics>();
 }
 
 #endregion
@@ -359,7 +360,7 @@ static void RegisterServices(WebApplicationBuilder builder)
 
 #region Setup Middleware
 static void SetupMiddleware(WebApplication app)
-{   
+{
 
     if (app.Environment.IsDevelopment())
     {
@@ -369,7 +370,7 @@ static void SetupMiddleware(WebApplication app)
     {
         app.UseForwardedHeaders();
         app.UseExceptionHandler();
-    }    
+    }
 
     app.UseStatusCodePages();
 
@@ -385,7 +386,7 @@ static void SetupMiddleware(WebApplication app)
     if(!allowAnonymousAccess)
     {
         app.UseAuthentication();
-        app.UseMiddleware<UserScopeMiddleware>();        
+        app.UseMiddleware<UserScopeMiddleware>();
     }
     app.UseAuthorization();
 
@@ -396,7 +397,7 @@ static void SetupMiddleware(WebApplication app)
     foreach (var api in apis)
     {
         if(api is null) throw new InvalidProgramException("No Endpoints were registered.");
-        api.RegisterEndpoints(app);        
+        api.RegisterEndpoints(app);
     }
 
     if (allowAnonymousAccess)
@@ -406,13 +407,13 @@ static void SetupMiddleware(WebApplication app)
     else
     {
         app.MapReverseProxy();
-    }    
+    }
 
     // Map health check middleware
     app.MapHealthChecks("/api/health", new HealthCheckOptions
     {
         ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse
-    }).RequireCors("HealthCheckPolicy");    
+    }).RequireCors("HealthCheckPolicy");
 }
 
 #endregion
