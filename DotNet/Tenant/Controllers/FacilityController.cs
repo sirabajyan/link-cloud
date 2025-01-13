@@ -1,5 +1,12 @@
 ﻿using AutoMapper;
+using Confluent.Kafka;
+using LantanaGroup.Link.Shared.Application.Enums;
+using LantanaGroup.Link.Shared.Application.Interfaces;
+using LantanaGroup.Link.Shared.Application.Models;
+using LantanaGroup.Link.Shared.Application.Models.Kafka;
+using LantanaGroup.Link.Shared.Application.Models.Responses;
 using LantanaGroup.Link.Tenant.Entities;
+using LantanaGroup.Link.Tenant.Interfaces;
 using LantanaGroup.Link.Tenant.Models;
 using LantanaGroup.Link.Tenant.Services;
 using Link.Authorization.Policies;
@@ -7,9 +14,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Quartz;
 using System.Diagnostics;
-using LantanaGroup.Link.Shared.Application.Enums;
-using LantanaGroup.Link.Shared.Application.Models.Responses;
-using LantanaGroup.Link.Tenant.Interfaces;
 
 namespace LantanaGroup.Link.Tenant.Controllers
 {
@@ -29,8 +33,9 @@ namespace LantanaGroup.Link.Tenant.Controllers
 
         private readonly ISchedulerFactory _schedulerFactory;
 
+        private readonly IKafkaProducerFactory<string, GenerateReportValue> _adHocKafkaProderFactory;
 
-        public FacilityController(ILogger<FacilityController> logger, IFacilityConfigurationService facilityConfigurationService, ISchedulerFactory schedulerFactory)
+        public FacilityController(ILogger<FacilityController> logger, IFacilityConfigurationService facilityConfigurationService, ISchedulerFactory schedulerFactory, IKafkaProducerFactory<string, GenerateReportValue> adHocKafkaProderFactory)
         {
 
             _facilityConfigurationService = facilityConfigurationService;
@@ -54,6 +59,7 @@ namespace LantanaGroup.Link.Tenant.Controllers
 
             _mapperModelToDto = configModelToDto.CreateMapper();
             _mapperDtoToModel = configDtoToModel.CreateMapper();
+            _adHocKafkaProderFactory = adHocKafkaProderFactory;
         }
 
         /// <summary>
@@ -271,5 +277,120 @@ namespace LantanaGroup.Link.Tenant.Controllers
             return NoContent();
         }
 
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        [HttpPost]
+        public async Task<IActionResult> GenerateAdHocReport(string facilityId, bool? bypassSubmission, DateTime? startDate, DateTime? endDate, List<string>? reportTypes, List<string>? patientIds)
+        {
+            if (string.IsNullOrEmpty(facilityId) && await _facilityConfigurationService.GetFacilityByFacilityId(facilityId, CancellationToken.None) == null)
+            {
+                return BadRequest("Facility does not exist.");
+            }
+
+            if (reportTypes == null || !reportTypes.Any())
+            {
+                return BadRequest("ReportTypes must be provided.");
+            }
+
+            if (startDate == null || startDate == DateTime.MinValue)
+            {
+                return BadRequest("StartDate must be provided.");
+            }
+
+            if (endDate == null || endDate == DateTime.MinValue)
+            {
+                return BadRequest("EndDate must be provided.");
+            }
+
+            try
+            {
+                foreach (var rt in reportTypes)
+                {
+                    //this will throw an ApplicationException if the Measure Definition does not exist.
+                    await _facilityConfigurationService.MeasureDefinitionExists(rt);
+                }
+
+                var producerConfig = new ProducerConfig();
+
+                var producer = _adHocKafkaProderFactory.CreateProducer(producerConfig);
+
+                var headers = new Headers();
+                string correlationId = Guid.NewGuid().ToString();
+
+                headers.Add("X-Correlation-Id", System.Text.Encoding.ASCII.GetBytes(correlationId));
+
+                var message = new Message<string, GenerateReportValue>
+                {
+                    Key = facilityId,
+                    Headers = headers,
+                    Value = new GenerateReportValue
+                    {
+                        ReportId = Guid.NewGuid().ToString(),
+                        StartDate = startDate,
+                        EndDate = endDate,
+                        ReportTypes = reportTypes,
+                        PatientIds = patientIds,
+                        BypassSubmission = bypassSubmission ?? false
+                    },
+                };
+
+                await producer.ProduceAsync(KafkaTopic.GenerateReportRequested.ToString(), message, CancellationToken.None);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Exception encountered in FacilityController.AdHocReport");
+                return Problem("An internal server error occurred.", statusCode: 500);
+            }
+
+            return Ok();
+        }
+
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        [HttpPost]
+        public async Task<IActionResult> RegenerateReport(string facilityId, string reportId, bool? bypassSubmission)
+        {
+            if (string.IsNullOrEmpty(facilityId) && await _facilityConfigurationService.GetFacilityByFacilityId(facilityId, CancellationToken.None) == null)
+            {
+                return BadRequest("Facility does not exist.");
+            }
+
+            if (string.IsNullOrEmpty(reportId))
+            {
+                return BadRequest("ReportId must be provided.");
+            }
+
+            try
+            {
+                var producerConfig = new ProducerConfig();
+
+                var producer = _adHocKafkaProderFactory.CreateProducer(producerConfig);
+
+                var headers = new Headers
+                {
+                    { "X-Report-Tracking-Id", System.Text.Encoding.ASCII.GetBytes(Guid.NewGuid().ToString()) }
+                };
+
+                var message = new Message<string, GenerateReportValue>
+                {
+                    Key = facilityId,
+                    Headers = headers,
+                    Value = new GenerateReportValue()
+                    {
+                        ReportId = reportId,
+                        BypassSubmission = bypassSubmission ?? false
+                    },
+                };
+
+                await producer.ProduceAsync(KafkaTopic.GenerateReportRequested.ToString(), message, CancellationToken.None);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Exception encountered in FacilityController.AdHocReport");
+                return Problem("An internal server error occurred.", statusCode: 500);
+            }
+
+            return Ok();
+        }
     }
 }
