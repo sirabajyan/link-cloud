@@ -33,9 +33,9 @@ namespace LantanaGroup.Link.Tenant.Controllers
 
         private readonly ISchedulerFactory _schedulerFactory;
 
-        private readonly IKafkaProducerFactory<string, GenerateReportValue> _adHocKafkaProderFactory;
+        private readonly IKafkaProducerFactory<string, GenerateReportValue> _adHocKafkaProducerFactory;
 
-        public FacilityController(ILogger<FacilityController> logger, IFacilityConfigurationService facilityConfigurationService, ISchedulerFactory schedulerFactory, IKafkaProducerFactory<string, GenerateReportValue> adHocKafkaProderFactory)
+        public FacilityController(ILogger<FacilityController> logger, IFacilityConfigurationService facilityConfigurationService, ISchedulerFactory schedulerFactory, IKafkaProducerFactory<string, GenerateReportValue> adHocKafkaProducerFactory)
         {
 
             _facilityConfigurationService = facilityConfigurationService;
@@ -59,7 +59,7 @@ namespace LantanaGroup.Link.Tenant.Controllers
 
             _mapperModelToDto = configModelToDto.CreateMapper();
             _mapperDtoToModel = configDtoToModel.CreateMapper();
-            _adHocKafkaProderFactory = adHocKafkaProderFactory;
+            _adHocKafkaProducerFactory = adHocKafkaProducerFactory;
         }
 
         /// <summary>
@@ -312,7 +312,7 @@ namespace LantanaGroup.Link.Tenant.Controllers
 
                 var producerConfig = new ProducerConfig();
 
-                var producer = _adHocKafkaProderFactory.CreateProducer(producerConfig);
+                var producer = _adHocKafkaProducerFactory.CreateProducer(producerConfig);
 
                 var headers = new Headers();
                 string correlationId = Guid.NewGuid().ToString();
@@ -364,7 +364,7 @@ namespace LantanaGroup.Link.Tenant.Controllers
             {
                 var producerConfig = new ProducerConfig();
 
-                var producer = _adHocKafkaProderFactory.CreateProducer(producerConfig);
+                var producer = _adHocKafkaProducerFactory.CreateProducer(producerConfig);
 
                 var headers = new Headers
                 {
