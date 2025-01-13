@@ -282,12 +282,12 @@ namespace LantanaGroup.Link.Tenant.Controllers
         [HttpPost]
         public async Task<IActionResult> GenerateAdHocReport(string facilityId, bool? bypassSubmission, DateTime? startDate, DateTime? endDate, List<string>? reportTypes, List<string>? patientIds)
         {
-            if (string.IsNullOrEmpty(facilityId) && await _facilityConfigurationService.GetFacilityByFacilityId(facilityId, CancellationToken.None) == null)
+            if (string.IsNullOrEmpty(facilityId) || await _facilityConfigurationService.GetFacilityByFacilityId(facilityId, CancellationToken.None) == null)
             {
                 return BadRequest("Facility does not exist.");
             }
 
-            if (reportTypes == null || !reportTypes.Any())
+            if (reportTypes == null || reportTypes.Count == 0)
             {
                 return BadRequest("ReportTypes must be provided.");
             }
@@ -350,7 +350,7 @@ namespace LantanaGroup.Link.Tenant.Controllers
         [HttpPost]
         public async Task<IActionResult> RegenerateReport(string facilityId, string reportId, bool? bypassSubmission)
         {
-            if (string.IsNullOrEmpty(facilityId) && await _facilityConfigurationService.GetFacilityByFacilityId(facilityId, CancellationToken.None) == null)
+            if (string.IsNullOrEmpty(facilityId) || await _facilityConfigurationService.GetFacilityByFacilityId(facilityId, CancellationToken.None) == null)
             {
                 return BadRequest("Facility does not exist.");
             }
