@@ -314,10 +314,10 @@ namespace LantanaGroup.Link.Tenant.Controllers
 
                 var producer = _adHocKafkaProducerFactory.CreateProducer(producerConfig);
 
-                var headers = new Headers();
-                string correlationId = Guid.NewGuid().ToString();
-
-                headers.Add("X-Correlation-Id", System.Text.Encoding.ASCII.GetBytes(correlationId));
+                var headers = new Headers
+                {
+                    { "X-Report-Tracking-Id", System.Text.Encoding.ASCII.GetBytes(Guid.NewGuid().ToString()) }
+                };
 
                 var message = new Message<string, GenerateReportValue>
                 {
