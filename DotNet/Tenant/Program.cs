@@ -153,7 +153,7 @@ namespace Tenant
             var producer = new KafkaProducerFactory<string, object>(kafkaConnection).CreateProducer(new Confluent.Kafka.ProducerConfig());
             builder.Services.AddSingleton<IProducer<string, object>>(producer);
 
-            builder.Services.AddTransient<LantanaGroup.Link.Shared.Application.Interfaces.IKafkaConsumerFactory<string, object>, LantanaGroup.Link.Shared.Application.Factories.KafkaConsumerFactory<string, object>>();
+            builder.Services.AddTransient<IKafkaConsumerFactory<string, object>, KafkaConsumerFactory<string, object>>();
 
 
             builder.Services.AddHttpClient();

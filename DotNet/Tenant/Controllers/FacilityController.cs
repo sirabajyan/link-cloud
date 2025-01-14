@@ -3,6 +3,7 @@ using Confluent.Kafka;
 using LantanaGroup.Link.Shared.Application.Enums;
 using LantanaGroup.Link.Shared.Application.Interfaces;
 using LantanaGroup.Link.Shared.Application.Models;
+using LantanaGroup.Link.Shared.Application.Models.Configs;
 using LantanaGroup.Link.Shared.Application.Models.Kafka;
 using LantanaGroup.Link.Shared.Application.Models.Responses;
 using LantanaGroup.Link.Tenant.Entities;
@@ -14,6 +15,9 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Quartz;
 using System.Diagnostics;
+using System.Net;
+using Microsoft.Extensions.Options;
+using System.Threading;
 
 namespace LantanaGroup.Link.Tenant.Controllers
 {
@@ -35,7 +39,10 @@ namespace LantanaGroup.Link.Tenant.Controllers
 
         private readonly IKafkaProducerFactory<string, GenerateReportValue> _adHocKafkaProducerFactory;
 
-        public FacilityController(ILogger<FacilityController> logger, IFacilityConfigurationService facilityConfigurationService, ISchedulerFactory schedulerFactory, IKafkaProducerFactory<string, GenerateReportValue> adHocKafkaProducerFactory)
+        private readonly IHttpClientFactory _httpClient;
+        private readonly ServiceRegistry _serviceRegistry;
+
+        public FacilityController(ILogger<FacilityController> logger, IFacilityConfigurationService facilityConfigurationService, ISchedulerFactory schedulerFactory, IKafkaProducerFactory<string, GenerateReportValue> adHocKafkaProducerFactory, IOptions<ServiceRegistry> serviceRegistry, IHttpClientFactory httpClient)
         {
 
             _facilityConfigurationService = facilityConfigurationService;
@@ -60,6 +67,8 @@ namespace LantanaGroup.Link.Tenant.Controllers
             _mapperModelToDto = configModelToDto.CreateMapper();
             _mapperDtoToModel = configDtoToModel.CreateMapper();
             _adHocKafkaProducerFactory = adHocKafkaProducerFactory;
+            _serviceRegistry = serviceRegistry?.Value ?? throw new ArgumentNullException(nameof(serviceRegistry));
+            _httpClient = httpClient;
         }
 
         /// <summary>
@@ -302,6 +311,11 @@ namespace LantanaGroup.Link.Tenant.Controllers
                 return BadRequest("EndDate must be provided.");
             }
 
+            if (endDate <= startDate)
+            {
+                return BadRequest("EndDate must be after StartDate.");
+            }
+
             try
             {
                 foreach (var rt in reportTypes)
@@ -338,7 +352,7 @@ namespace LantanaGroup.Link.Tenant.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Exception encountered in FacilityController.AdHocReport");
+                _logger.LogError(ex, "Exception encountered in FacilityController.GenerateAdHocReport");
                 return Problem("An internal server error occurred.", statusCode: 500);
             }
 
@@ -362,6 +376,25 @@ namespace LantanaGroup.Link.Tenant.Controllers
 
             try
             {
+                var httpClient = _httpClient.CreateClient();
+
+                string requestUrl = $"{_serviceRegistry.ReportServiceApiUrl.Trim('/')}/Report/Schedule?FacilityId={facilityId}&reportScheduleId={reportId}";
+
+                var response = await httpClient.GetAsync(requestUrl, CancellationToken.None);
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    throw new Exception(
+                        $"Report Service Call unsuccessful: StatusCode: {response.StatusCode} | Response: {await response.Content.ReadAsStringAsync(CancellationToken.None)} | Query URL: {requestUrl}");
+                }
+
+                var reportScheduleSummary = (ReportScheduleSummaryModel?)await response.Content.ReadFromJsonAsync(typeof(ReportScheduleSummaryModel), CancellationToken.None);
+
+                if (reportScheduleSummary == null)
+                {
+                    return Problem("No ReportSchedule found for the provided ReportScheduleId", statusCode: (int)HttpStatusCode.NotFound);
+                }
+
                 var producerConfig = new ProducerConfig();
 
                 var producer = _adHocKafkaProducerFactory.CreateProducer(producerConfig);
@@ -373,11 +406,11 @@ namespace LantanaGroup.Link.Tenant.Controllers
 
                 var message = new Message<string, GenerateReportValue>
                 {
-                    Key = facilityId,
+                    Key = reportScheduleSummary.FacilityId,
                     Headers = headers,
                     Value = new GenerateReportValue()
                     {
-                        ReportId = reportId,
+                        ReportId = reportScheduleSummary.ReportId,
                         BypassSubmission = bypassSubmission ?? false
                     },
                 };
@@ -386,7 +419,7 @@ namespace LantanaGroup.Link.Tenant.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Exception encountered in FacilityController.AdHocReport");
+                _logger.LogError(ex, "Exception encountered in FacilityController.RegenerateReport");
                 return Problem("An internal server error occurred.", statusCode: 500);
             }
 
