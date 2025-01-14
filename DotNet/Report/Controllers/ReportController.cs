@@ -63,7 +63,7 @@ namespace LantanaGroup.Link.Report.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Exception in ReportController.GetSubmissionBundleForPatient for facility '{FacilityId}' and patient '{PatientId}'",HtmlInputSanitizer.SanitizeAndRemove(facilityId), HtmlInputSanitizer.Sanitize(patientId));
+                _logger.LogError(ex, "Exception in ReportController.GetSubmissionBundleForPatient for facility '{FacilityId}' and patient '{PatientId}'", HtmlInputSanitizer.SanitizeAndRemove(facilityId), HtmlInputSanitizer.Sanitize(patientId));
                 return Problem(ex.Message, statusCode: 500);
             }
         }
@@ -91,21 +91,30 @@ namespace LantanaGroup.Link.Report.Controllers
                 return BadRequest("Parameter reportScheduleId is null or whitespace");
             }
 
-            var model =  (await _database.ReportScheduledRepository.FindAsync(r => r.FacilityId == facilityId && r.Id == reportScheduleId)).SingleOrDefault();
-
-            if (model == null)
+            try
             {
-                return Problem(detail: "No Report Schedule found for the provided FacilityId and ReportId", statusCode: (int)HttpStatusCode.NotFound);
+
+                var model = (await _database.ReportScheduledRepository.FindAsync(r => r.FacilityId == facilityId && r.Id == reportScheduleId)).SingleOrDefault();
+
+                if (model == null)
+                {
+                    return Problem(detail: "No Report Schedule found for the provided FacilityId and ReportId", statusCode: (int)HttpStatusCode.NotFound);
+                }
+
+                return Ok(new ReportScheduleSummaryModel
+                {
+                    FacilityId = facilityId,
+                    ReportId = reportScheduleId,
+                    StartDate = model.ReportStartDate,
+                    EndDate = model.ReportEndDate,
+                    SubmitReportDateTime = model.SubmitReportDateTime
+                });
             }
-
-            return Ok(new ReportScheduleSummaryModel
+            catch (Exception ex)
             {
-                FacilityId = facilityId,
-                ReportId = reportScheduleId,
-                StartDate = model.ReportStartDate,
-                EndDate = model.ReportEndDate,
-                SubmitReportDateTime = model.SubmitReportDateTime
-            });
+                _logger.LogError(ex, "Exception in ReportController.GetReportScheduleSummary for facility '{FacilityId}' and report '{ReportId}'", HtmlInputSanitizer.SanitizeAndRemove(facilityId), HtmlInputSanitizer.Sanitize(reportScheduleId));
+                return Problem("An error occurred while retrieving the report schedule.", statusCode: (int)HttpStatusCode.InternalServerError);
+            }
         }
     }
 }
