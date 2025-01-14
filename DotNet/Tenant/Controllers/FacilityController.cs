@@ -296,7 +296,7 @@ namespace LantanaGroup.Link.Tenant.Controllers
         /// <returns></returns>
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        [HttpPost]
+        [HttpPost("AdHocReport")]
         public async Task<IActionResult> GenerateAdHocReport(string facilityId, AdHocReportRequest request)
         {
             if (string.IsNullOrEmpty(facilityId) || await _facilityConfigurationService.GetFacilityByFacilityId(facilityId, CancellationToken.None) == null)
@@ -369,7 +369,7 @@ namespace LantanaGroup.Link.Tenant.Controllers
 
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        [HttpPost]
+        [HttpPost("RegenerateReport")]
         public async Task<IActionResult> RegenerateReport(string facilityId, RegenerateReportRequest request)
         {
             if (string.IsNullOrEmpty(facilityId) || await _facilityConfigurationService.GetFacilityByFacilityId(facilityId, CancellationToken.None) == null)
