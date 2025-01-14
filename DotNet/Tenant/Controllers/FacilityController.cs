@@ -334,7 +334,7 @@ namespace LantanaGroup.Link.Tenant.Controllers
 
                 var producerConfig = new ProducerConfig();
 
-                var producer = _adHocKafkaProducerFactory.CreateProducer(producerConfig);
+                using var producer = _adHocKafkaProducerFactory.CreateProducer(producerConfig);
 
                 var headers = new Headers
                 {
@@ -407,7 +407,7 @@ namespace LantanaGroup.Link.Tenant.Controllers
 
                 var producerConfig = new ProducerConfig();
 
-                var producer = _adHocKafkaProducerFactory.CreateProducer(producerConfig);
+                using var producer = _adHocKafkaProducerFactory.CreateProducer(producerConfig);
 
                 var headers = new Headers
                 {
