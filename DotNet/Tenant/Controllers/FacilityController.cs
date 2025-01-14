@@ -1,4 +1,5 @@
-﻿using AutoMapper;
+﻿using System.ComponentModel.DataAnnotations;
+using AutoMapper;
 using Confluent.Kafka;
 using LantanaGroup.Link.Shared.Application.Enums;
 using LantanaGroup.Link.Shared.Application.Interfaces;
@@ -18,6 +19,7 @@ using System.Diagnostics;
 using System.Net;
 using Microsoft.Extensions.Options;
 using System.Threading;
+using Microsoft.IdentityModel.Tokens;
 
 namespace LantanaGroup.Link.Tenant.Controllers
 {
@@ -286,39 +288,45 @@ namespace LantanaGroup.Link.Tenant.Controllers
             return NoContent();
         }
 
+        /// <summary>
+        /// Generat
+        /// </summary>
+        /// <param name="facilityId"></param>
+        /// <param name="request"></param>
+        /// <returns></returns>
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         [HttpPost]
-        public async Task<IActionResult> GenerateAdHocReport(string facilityId, bool? bypassSubmission, DateTime? startDate, DateTime? endDate, List<string>? reportTypes, List<string>? patientIds)
+        public async Task<IActionResult> GenerateAdHocReport(string facilityId, AdHocReportRequest request)
         {
             if (string.IsNullOrEmpty(facilityId) || await _facilityConfigurationService.GetFacilityByFacilityId(facilityId, CancellationToken.None) == null)
             {
                 return BadRequest("Facility does not exist.");
             }
 
-            if (reportTypes == null || reportTypes.Count == 0)
+            if (request.ReportTypes == null || request.ReportTypes.Count == 0)
             {
                 return BadRequest("ReportTypes must be provided.");
             }
 
-            if (startDate == null || startDate == DateTime.MinValue)
+            if (request.StartDate == null || request.StartDate == DateTime.MinValue)
             {
                 return BadRequest("StartDate must be provided.");
             }
 
-            if (endDate == null || endDate == DateTime.MinValue)
+            if (request.EndDate == null || request.EndDate == DateTime.MinValue)
             {
                 return BadRequest("EndDate must be provided.");
             }
 
-            if (endDate <= startDate)
+            if (request.EndDate <= request.StartDate)
             {
                 return BadRequest("EndDate must be after StartDate.");
             }
 
             try
             {
-                foreach (var rt in reportTypes)
+                foreach (var rt in request.ReportTypes)
                 {
                     //this will throw an ApplicationException if the Measure Definition does not exist.
                     await _facilityConfigurationService.MeasureDefinitionExists(rt);
@@ -340,11 +348,11 @@ namespace LantanaGroup.Link.Tenant.Controllers
                     Value = new GenerateReportValue
                     {
                         ReportId = Guid.NewGuid().ToString(),
-                        StartDate = startDate,
-                        EndDate = endDate,
-                        ReportTypes = reportTypes,
-                        PatientIds = patientIds,
-                        BypassSubmission = bypassSubmission ?? false
+                        StartDate = request.StartDate,
+                        EndDate = request.EndDate,
+                        ReportTypes = request.ReportTypes,
+                        PatientIds = request.PatientIds,
+                        BypassSubmission = request.BypassSubmission?? false
                     },
                 };
 
@@ -362,14 +370,14 @@ namespace LantanaGroup.Link.Tenant.Controllers
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         [HttpPost]
-        public async Task<IActionResult> RegenerateReport(string facilityId, string reportId, bool? bypassSubmission)
+        public async Task<IActionResult> RegenerateReport(string facilityId, RegenerateReportRequest request)
         {
             if (string.IsNullOrEmpty(facilityId) || await _facilityConfigurationService.GetFacilityByFacilityId(facilityId, CancellationToken.None) == null)
             {
                 return BadRequest("Facility does not exist.");
             }
 
-            if (string.IsNullOrEmpty(reportId))
+            if (string.IsNullOrEmpty(request.ReportId))
             {
                 return BadRequest("ReportId must be provided.");
             }
@@ -378,7 +386,7 @@ namespace LantanaGroup.Link.Tenant.Controllers
             {
                 var httpClient = _httpClient.CreateClient();
 
-                string requestUrl = $"{_serviceRegistry.ReportServiceApiUrl.Trim('/')}/Report/Schedule?FacilityId={facilityId}&reportScheduleId={reportId}";
+                string requestUrl = $"{_serviceRegistry.ReportServiceApiUrl.Trim('/')}/Report/Schedule?FacilityId={facilityId}&reportScheduleId={request.ReportId}";
 
                 var response = await httpClient.GetAsync(requestUrl, CancellationToken.None);
 
@@ -411,7 +419,7 @@ namespace LantanaGroup.Link.Tenant.Controllers
                     Value = new GenerateReportValue()
                     {
                         ReportId = reportScheduleSummary.ReportId,
-                        BypassSubmission = bypassSubmission ?? false
+                        BypassSubmission = request.BypassSubmission ?? false
                     },
                 };
 
