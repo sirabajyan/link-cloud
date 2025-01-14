@@ -385,10 +385,12 @@ namespace LantanaGroup.Link.Tenant.Controllers
             try
             {
                 var httpClient = _httpClient.CreateClient();
+                httpClient.Timeout = TimeSpan.FromSeconds(30);
 
                 string requestUrl = $"{_serviceRegistry.ReportServiceApiUrl.Trim('/')}/Report/Schedule?FacilityId={facilityId}&reportScheduleId={request.ReportId}";
 
-                var response = await httpClient.GetAsync(requestUrl, CancellationToken.None);
+                using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+                var response = await httpClient.GetAsync(requestUrl, cts.Token);
 
                 if (!response.IsSuccessStatusCode)
                 {
