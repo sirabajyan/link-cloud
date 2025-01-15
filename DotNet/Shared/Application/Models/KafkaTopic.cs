@@ -57,5 +57,6 @@ public enum KafkaTopic
     SubmitReportRetry,
     [StringValue("ReportScheduled-Retry")]
     ReportScheduledRetry,
-    MeasureEvaluated
+    MeasureEvaluated,
+    GenerateReportRequested
 }
