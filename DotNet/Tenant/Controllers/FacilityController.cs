@@ -348,7 +348,6 @@ namespace LantanaGroup.Link.Tenant.Controllers
                     Headers = headers,
                     Value = new GenerateReportValue
                     {
-                        ReportId = Guid.NewGuid().ToString(),
                         StartDate = request.StartDate,
                         EndDate = request.EndDate,
                         ReportTypes = request.ReportTypes,
