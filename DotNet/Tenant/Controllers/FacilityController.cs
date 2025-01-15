@@ -295,6 +295,7 @@ namespace LantanaGroup.Link.Tenant.Controllers
         /// <param name="request"></param>
         /// <returns></returns>
         [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         [HttpPost("AdHocReport")]
         public async Task<IActionResult> GenerateAdHocReport(string facilityId, AdHocReportRequest request)
@@ -368,6 +369,8 @@ namespace LantanaGroup.Link.Tenant.Controllers
         }
 
         [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         [HttpPost("RegenerateReport")]
         public async Task<IActionResult> RegenerateReport(string facilityId, RegenerateReportRequest request)
