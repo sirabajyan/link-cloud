@@ -6,7 +6,7 @@ version: 2
 updates:
   - &default_config
     package-ecosystem: "npm"
-    directory: "/"
+    directory: "Web/Admin.UI/"
     schedule:
       interval: "weekly"
       day: "tuesday"
