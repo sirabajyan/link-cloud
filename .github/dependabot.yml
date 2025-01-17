@@ -1,5 +1,5 @@
 # dependabot.yml file with customized commit messages and reviewers.
-# This will check for security and version updates at a certain interval, 
+# This will check for security and version updates at a certain interval,
 # and open pull requests for us to review and integrate into the dev branch.
 
 version: 2
@@ -13,7 +13,7 @@ updates:
       - "@lantanagroup/link-security-team"
     assignees: 
       - "sdmcgeown"
-    # Group minor and patch security and version updates into a PR 
+    # Group minor and patch security and version updates into a PR
     # so we don't get overwhelmed
     groups: 
       security_updates: 
@@ -37,7 +37,7 @@ updates:
       - "@lantanagroup/link-security-team"
     assignees: 
       - "sdmcgeown"
-    # Group minor and patch security and version updates into a PR 
+    # Group minor and patch security and version updates into a PR
     # so we don't get overwhelmed
     groups: 
       security_updates: 
@@ -47,31 +47,6 @@ updates:
         applies-to: version-updates
         update-types: ["patch", "minor"]
     labels: 
-      - "link-security"
+      - "link-security"      
     commit-message: 
       prefix: "[docker update]: "
-
-
-  # And enable version updates for GitHub Actions
-  - package-ecosystem: "github-actions"
-    directory: "Web/Admin.UI/"
-    schedule: 
-      interval: "weekly"
-      day: "tuesday"
-    reviewers: 
-      - "@lantanagroup/link-security-team"
-    assignees: 
-      - "sdmcgeown"
-    # Group minor and patch security and version updates into a PR 
-    # so we don't get overwhelmed
-    groups: 
-      security_updates: 
-        applies-to: security-updates
-        update-types: ["patch", "minor"]
-      version_updates: 
-        applies-to: version-updates
-        update-types: ["patch", "minor"]
-    labels: 
-      - "link-security"
-    commit-message:
-      prefix: "[github-actions update]: "
