@@ -1,28 +1,27 @@
 ﻿using Confluent.Kafka;
-
+using LantanaGroup.Link.LinkAdmin.BFF.Application.Interfaces.Services;
 using LantanaGroup.Link.Shared.Application.Models;
 using LantanaGroup.Link.Shared.Application.Models.Configs;
-using Microsoft.Extensions.Caching.Distributed;
-
-using Microsoft.Extensions.Options;
-
-using static Confluent.Kafka.ConfigPropertyNames;
+using System.Collections.Concurrent;
 
 namespace LantanaGroup.Link.LinkAdmin.BFF.Application.Commands.Integration
 {
 
     public class KafkaConsumerManager
     {
-    
 
-        private readonly List<(IConsumer<string, string>, CancellationTokenSource)> _consumers;
+        private ConcurrentBag<(IConsumer<string, string>, CancellationTokenSource)> _consumers;
         private readonly KafkaConnection _kafkaConnection;
         private readonly KafkaConsumerService _kafkaConsumerService;
-        private readonly IOptions<CacheSettings> _cacheSettings;
         private readonly IServiceScopeFactory _serviceScopeFactory;
 
         private readonly static string errorTopic = "-Error";
-        public static readonly string delimitator = ":";
+        public static readonly string delimiter = ":";
+        public static readonly string consumers = "consumers";
+        private static readonly object _lock = new object();
+
+        private readonly ILogger<KafkaConsumerService> _logger;
+        private readonly ICacheService _cache;
 
         // construct a list of topics 
         private List<(string, string)> kafkaTopics = new List<(string, string)>
@@ -48,40 +47,71 @@ namespace LantanaGroup.Link.LinkAdmin.BFF.Application.Commands.Integration
 
 
         // Add constructor
-        public KafkaConsumerManager(KafkaConsumerService kafkaConsumerService, IOptions<Shared.Application.Models.Configs.CacheSettings> cacheSettings, IServiceScopeFactory serviceScopeFactory, KafkaConnection kafkaConnection)
+        public KafkaConsumerManager(KafkaConsumerService kafkaConsumerService, ICacheService cache, IServiceScopeFactory serviceScopeFactory, KafkaConnection kafkaConnection, ILogger<KafkaConsumerService> logger)
         {
             _kafkaConsumerService = kafkaConsumerService;
-            _cacheSettings = cacheSettings ?? throw new ArgumentNullException(nameof(cacheSettings));
             _serviceScopeFactory = serviceScopeFactory ?? throw new ArgumentNullException(nameof(serviceScopeFactory));
-            _consumers = new List<(IConsumer<string, string>, CancellationTokenSource)>();
+            _consumers = new ConcurrentBag<(IConsumer<string, string>, CancellationTokenSource)>();
             _kafkaConnection = kafkaConnection ?? throw new ArgumentNullException(nameof(_kafkaConnection));
+            _cache = cache;
+            _logger = logger;
         }
 
 
-        private IServiceScope ClearRedisCache(string facility)
+        private void ClearCache(string facility)
         {
-            // clear Redis cache
-            var scope = _serviceScopeFactory.CreateScope();
-
-            var _cache = scope.ServiceProvider.GetRequiredService<IDistributedCache>();
-
-            foreach (var topic in kafkaTopics)
+            try
             {
+                foreach (var topic in kafkaTopics)
                 {
-                    String redisKey = topic.Item2 + delimitator + facility;
-                    _cache.Remove(redisKey);
+                    {
+                        String cacheKey = topic.Item2 + delimiter + facility;
+                        _cache.Remove(cacheKey);
+                    }
                 }
             }
-            return scope;
+            catch (InvalidOperationException ex)
+            {
+                _logger.LogError(ex, "Failed to clear cache for facility {facility} due to invalid operation", facility);
+            }
+
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unexpected error while clearing cache for facility {facility}", facility);
+            }
         }
 
+
+        // Remove consumers based on facility using lock to avoid concurrent access to the bag
+        private void RemoveConsumersBasedOnFacility(ConcurrentBag<(IConsumer<string, string>, CancellationTokenSource)> bag, string facility)
+        {
+            lock (_lock)
+            {
+                var newBag = new ConcurrentBag < (IConsumer<string, string>, CancellationTokenSource) > ();
+                foreach (var item in bag)
+                {
+                    if (!item.Item1.Name.Contains(facility)) // Keep items that do not match the condition
+                    {
+                        newBag.Add(item);
+                    }
+                }
+
+                // Replace the old bag
+                while (bag.TryTake(out _)) { } // Clear the old bag
+                foreach (var item in newBag)
+                {
+                    bag.Add(item); // Add the filtered items back to the original bag
+                }
+            }
+        }
 
         public void CreateAllConsumers(string facility)
         {
-            //clear Redis cache for that facility
-            ClearRedisCache(facility);
+            //clear  cache for that facility
+            ClearCache(facility);
 
-            // start consumers
+            // create consumers
+
             foreach (var topic in kafkaTopics)
             {
                 if (topic.Item2 != string.Empty)
@@ -97,11 +127,12 @@ namespace LantanaGroup.Link.LinkAdmin.BFF.Application.Commands.Integration
             var cts = new CancellationTokenSource();
             var config = new ConsumerConfig
             {
-                GroupId = groupId,
+                GroupId = groupId + delimiter + facility,
+                ClientId = facility,
                 BootstrapServers = string.Join(", ", _kafkaConnection.BootstrapServers),
                 AutoOffsetReset = AutoOffsetReset.Earliest
             };
-
+ 
             if (_kafkaConnection.SaslProtocolEnabled)
             {
                 config.SecurityProtocol = SecurityProtocol.SaslPlaintext;
@@ -115,6 +146,7 @@ namespace LantanaGroup.Link.LinkAdmin.BFF.Application.Commands.Integration
             _consumers.Add((consumer, cts));
 
             Task.Run(() => _kafkaConsumerService.StartConsumer(groupId, topic, facility, consumer, cts.Token));
+
         }
 
 
@@ -122,16 +154,15 @@ namespace LantanaGroup.Link.LinkAdmin.BFF.Application.Commands.Integration
         {
             Dictionary<string, string> correlationIds = new Dictionary<string, string>();
 
-            using var scope = _serviceScopeFactory.CreateScope();
-            var _cache = scope.ServiceProvider.GetRequiredService<IDistributedCache>();
-            // loop through the redis keys for that facility and get the correlation id for each
+            // loop through the  keys for that facility and get the correlation id for each
             foreach (var topic in kafkaTopics)
             {
                 if (topic.Item2 != string.Empty)
                 {
-                    string redisKey = topic.Item2 + delimitator + facility;
+                    string facilityKey = topic.Item2 + delimiter + facility;
 
-                    correlationIds.Add(topic.Item2, _cache.GetString(redisKey));
+                    correlationIds.Add(topic.Item2, _cache.Get<string>(facilityKey));
+  
                 }
             }
             return correlationIds;
@@ -139,18 +170,41 @@ namespace LantanaGroup.Link.LinkAdmin.BFF.Application.Commands.Integration
 
         public void StopAllConsumers(string facility)
         {
-            // stop consumers
-            foreach (var consumerTuple in _consumers)
-            {
-                consumerTuple.Item2.Cancel();
-            }
-            _consumers.Clear();
+            //clear  cache for that facility
+            ClearCache(facility);
 
-            //clear Redis cache for that facility
-            ClearRedisCache(facility);
+            // stop consumers for that facility
+            foreach (var consumer in _consumers)
+            {
+
+                if (consumer.Item1.Name.Contains(facility))
+                {
+                    _logger.LogInformation($"Type of Item2: {consumer.Item2.GetType()}");
+                    if (consumer.Item2 != null && consumer.Item2 is CancellationTokenSource cts && !cts.IsCancellationRequested)
+                    {
+                        try
+                        {
+                            consumer.Item2.Cancel();
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogInformation($"Error during cancellation: {ex.Message}");
+
+                        }
+                    }
+                    else
+                    {
+                        _logger.LogInformation("CancellationTokenSource is already disposed or canceled.");
+                    }
+                 
+                }
+            }
+
+            // remove only consumers for that facility
+            RemoveConsumersBasedOnFacility(_consumers, facility);
 
         }
-    }
 
+    }
 
 }

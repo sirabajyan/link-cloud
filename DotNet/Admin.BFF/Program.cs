@@ -31,6 +31,7 @@ using LantanaGroup.Link.Shared.Application.Extensions.ExternalServices;
 using LantanaGroup.Link.Shared.Application.Extensions.Security;
 using Microsoft.AspNetCore.HttpOverrides;
 using LantanaGroup.Link.LinkAdmin.BFF.Infrastructure.Health;
+using LantanaGroup.Link.LinkAdmin.BFF.Infrastructure.Extensions.Caching;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -73,12 +74,12 @@ static void RegisterServices(WebApplicationBuilder builder)
 
     //Initialize activity source
     var version = Assembly.GetExecutingAssembly().GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion ?? string.Empty;
-    ServiceActivitySource.Initialize(version); 
+    ServiceActivitySource.Initialize(version);
 
     // Add problem details
     builder.Services.AddProblemDetailsService(options =>
     {
-        options.Environment = builder.Environment;  
+        options.Environment = builder.Environment;
         options.ServiceName = LinkAdminConstants.ServiceName;
         options.IncludeExceptionDetails = builder.Configuration.GetValue<bool>("ProblemDetails:IncludeExceptionDetails");
     });
@@ -117,14 +118,19 @@ static void RegisterServices(WebApplicationBuilder builder)
     builder.Services.AddTransient<ICreatePatientAcquired, CreatePatientAcquired>();
     builder.Services.AddTransient<ICreateReportScheduled, CreateReportScheduled>();
     builder.Services.AddTransient<ICreateDataAcquisitionRequested, CreateDataAcquisitionRequested>();
-    builder.Services.AddTransient<ICreateLinkBearerToken, CreateLinkBearerToken>();
-    builder.Services.AddTransient<IRefreshSigningKey, RefreshSigningKey>();
     builder.Services.AddTransient<IGetLinkAccount, GetLinkAccount>();
+    if (!allowAnonymousAccess) { 
+        builder.Services.AddTransient<ICreateLinkBearerToken, CreateLinkBearerToken>();
+        builder.Services.AddTransient<IRefreshSigningKey, RefreshSigningKey>();
+    }
+
+   
     builder.Services.AddTransient<KafkaConsumerManager>();
     builder.Services.AddTransient<KafkaConsumerService>();
 
     //Add Redis   
-    if (builder.Configuration.GetValue<bool>("Cache:Enabled"))
+    var cacheType = builder.Configuration.GetValue<string>("Cache:Type");
+    if (cacheType == "Redis")
     {
         Log.Logger.Information("Registering Redis Cache for the Link Admin API.");
         builder.Services.AddRedisCache(options =>
@@ -139,12 +145,21 @@ static void RegisterServices(WebApplicationBuilder builder)
             options.ConnectionString = redisConnection;
             options.Password = builder.Configuration.GetValue<string>("Redis:Password");
 
+            options.Enabled = builder.Configuration.GetValue<string>("Cache:Type") == "Redis";
             if (builder.Configuration.GetValue<int>("Cache:Timeout") > 0)
             {
                 options.Timeout = builder.Configuration.GetValue<int>("Cache:Timeout");
             }
         });
-    }    
+        builder.Services.AddSingleton<ICacheService, RedisCacheService>();
+    }
+    else // defaults to InMemory cache
+    {
+        Log.Logger.Warning("InMemory Cache is enabled.");
+        builder.Services.AddMemoryCache();
+
+        builder.Services.AddSingleton<ICacheService, InMemoryCacheService>();
+    }
 
     // Add Secret Manager
     if (builder.Configuration.GetValue<bool>("SecretManagement:Enabled"))
@@ -175,6 +190,28 @@ static void RegisterServices(WebApplicationBuilder builder)
             {
                 pb.RequireAssertion(_ => true);
             });
+    }
+    
+    // Configure CORS regardless of anonymous access
+    var corsConfig = builder.Configuration.GetSection(LinkAdminConstants.AppSettingsSectionNames.CORS).Get<CorsConfig>();
+    if (corsConfig != null)
+    {
+        Log.Logger.Debug("Registering CORS settings");
+        builder.Services.AddCorsService(options =>
+        {
+            options.Environment = builder.Environment;
+            options.PolicyName = corsConfig.PolicyName;
+            options.AllowedHeaders = corsConfig.AllowedHeaders;
+            options.AllowedExposedHeaders = corsConfig.AllowedExposedHeaders;
+            options.AllowedMethods = corsConfig.AllowedMethods;
+            options.AllowAllOrigins = corsConfig.AllowAllOrigins;
+            options.AllowedOrigins = corsConfig.AllowedOrigins;
+            options.AllowCredentials = corsConfig.AllowCredentials;
+        }, Log.Logger);
+    }
+    else
+    {
+        Log.Logger.Warning("CORS settings not found.");
     }
 
     // Add header forwarding
@@ -352,17 +389,9 @@ static void SetupMiddleware(WebApplication app)
     app.UseStatusCodePages();
 
     // Configure swagger
-    if (app.Configuration.GetValue<bool>(ConfigurationConstants.AppSettings.EnableSwagger))
-    {
-        app.UseSwagger(opts => { opts.RouteTemplate = "api/swagger/{documentname}/swagger.json"; });
-        app.UseSwaggerUI(opts => {
-            opts.SwaggerEndpoint("/api/swagger/v1/swagger.json", $"{ServiceActivitySource.ServiceName} - {ServiceActivitySource.Version}");
-            opts.RoutePrefix = "api/swagger";
-        });
-    }
+    app.ConfigureSwagger();
 
     app.UseRouting();
-    var corsConfig = app.Configuration.GetSection(ConfigurationConstants.AppSettings.CORS).Get<CorsSettings>();
     app.UseCors(CorsConfig.DefaultCorsPolicyName);
 
     //check for anonymous access
@@ -402,6 +431,3 @@ static void SetupMiddleware(WebApplication app)
 }
 
 #endregion
-
-
-
