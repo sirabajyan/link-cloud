@@ -3,42 +3,37 @@
 # and open pull requests for us to review and integrate into the dev branch.
 
 version: 2
-updates:
+updates: 
   - &default_config
     package-ecosystem: "npm"
     directory: "Web/Admin.UI/"
-    schedule:
+    schedule: 
       interval: "weekly"
       day: "tuesday"
-    reviewers:
+    reviewers: 
       - "@lantanagroup/link-security-team"
-    assignees:
+    assignees: 
       - "sdmcgeown"
     # Group minor and patch security and version updates into a PR 
     # so we don't get overwhelmed
-    groups:
-      security_updates:
+    groups: 
+      security_updates: 
         applies-to: security-updates
         update-types: ["patch", "minor"]
-      version_updates:
+      version_updates: 
         applies-to: version-updates
         update-types: ["patch", "minor"]
-    labels:
+    labels: 
       - "link-security"
-    commit-message:
+    commit-message: 
       prefix: "[npm]: "
 
   # Repeat for docker, except override the commit message format
   - <<: *default_config
     package-ecosystem: "docker"
-    commit-message:
+    commit-message: 
       prefix: "[docker]: "
 
-  # Repeat for composer, except override the commit message format
-  - <<: *default_config
-    package-ecosystem: "composer"
-    commit-message:
-      prefix: "[composer]: "
 
   # And enable version updates for GitHub Actions
   - <<: *default_config
