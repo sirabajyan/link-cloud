@@ -16,7 +16,7 @@ public class BasicAuth : IAuth
         {
             credentialsArray = $"{authSettings.UserName}:{authSettings.Password}".ToCharArray();
 
-            var pw = HtmlInputSanitizer.Sanitize(Convert.ToBase64String(Encoding.UTF8.GetBytes(credentialsArray)))));
+            var pw = HtmlInputSanitizer.Sanitize(Convert.ToBase64String(Encoding.UTF8.GetBytes(credentialsArray)));
 
             return (false,
                 new AuthenticationHeaderValue("basic", pw));
