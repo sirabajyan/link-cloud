@@ -171,6 +171,7 @@ namespace LantanaGroup.Link.Report.Listeners
                                     Frequency = "AdHoc",
                                     ReportTypes = reportTypes.ToArray(),
                                     PatientsToQueryDataRequested = true,
+                                    EnableSubmission = !value.BypassSubmission,
                                     CreateDate = DateTime.UtcNow
                                 };
 
