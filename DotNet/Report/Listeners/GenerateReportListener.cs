@@ -86,7 +86,10 @@ namespace LantanaGroup.Link.Report.Listeners
             var config = new ConsumerConfig()
             {
                 GroupId = ReportConstants.ServiceName,
-                EnableAutoCommit = false
+                EnableAutoCommit = false,
+                AutoOffsetReset = AutoOffsetReset.Earliest,
+                SessionTimeoutMs = 10000,
+                MaxPollIntervalMs = 300000
             };
 
             using var consumer = _kafkaConsumerFactory.CreateConsumer(config);
