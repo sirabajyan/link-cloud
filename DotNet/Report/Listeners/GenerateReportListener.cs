@@ -113,7 +113,7 @@ namespace LantanaGroup.Link.Report.Listeners
 
                             try
                             {
-                                var scope = _serviceScopeFactory.CreateScope();
+                                using var scope = _serviceScopeFactory.CreateScope();
                                 var measureReportScheduledManager =
                                     scope.ServiceProvider.GetRequiredService<IReportScheduledManager>();
 
