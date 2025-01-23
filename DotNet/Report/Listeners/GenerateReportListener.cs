@@ -310,7 +310,7 @@ namespace LantanaGroup.Link.Report.Listeners
             var token = await _createSystemToken.ExecuteAsync(_linkTokenServiceConfig.Value.SigningKey, 5);
             httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
-            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(120));
             var censusResponse = await httpClient.GetAsync(censusRequestUrl, cts.Token);
             var censusContent = await censusResponse.Content.ReadAsStringAsync(cts.Token);
 
