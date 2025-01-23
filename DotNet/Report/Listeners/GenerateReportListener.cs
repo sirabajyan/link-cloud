@@ -296,7 +296,7 @@ namespace LantanaGroup.Link.Report.Listeners
                 throw new Exception("Link Token Service Signing Key is missing.");
 
             //Add link token
-            var token = _createSystemToken.ExecuteAsync(_linkTokenServiceConfig.Value.SigningKey, 5).Result;
+            var token = await _createSystemToken.ExecuteAsync(_linkTokenServiceConfig.Value.SigningKey, 5);
             httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
             var censusResponse = await httpClient.GetAsync(censusRequestUrl, CancellationToken.None);
