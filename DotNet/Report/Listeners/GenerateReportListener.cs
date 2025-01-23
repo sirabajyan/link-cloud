@@ -130,6 +130,10 @@ namespace LantanaGroup.Link.Report.Listeners
                                 }
 
                                 result.Message.Headers.TryGetLastBytes("X-Report-Tracking-Id", out var headerValue);
+                                if (headerValue == null)
+                                {
+                                    throw new DeadLetterException("Header 'X-Report-Tracking-Id' not found in message headers.");
+                                }
                                 var newReportId = System.Text.Encoding.UTF8.GetString(headerValue);
 
                                 //If we are re-running an existing report, fetch the details from the database and replace the Values retrieved from the message
