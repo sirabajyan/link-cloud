@@ -301,7 +301,7 @@ namespace LantanaGroup.Link.Report.Listeners
             string dtFormat = "yyyy-MM-ddTHH:mm:ss.fffZ";
             var httpClient = _httpClientFactory.CreateClient();
 
-            string censusRequestUrl = $"{_serviceRegistry.CensusServiceApiUrl}/Census/{facilityId}/history/admitted?startDate={startDate.ToString(dtFormat)}&endDate={enddate.ToString(dtFormat)}";
+            string censusRequestUrl = $"{_serviceRegistry.CensusServiceApiUrl}/Census/{Uri.EscapeDataString(facilityId)}/history/admitted?startDate={Uri.EscapeDataString(startDate.ToString(dtFormat))}&endDate={Uri.EscapeDataString(enddate.ToString(dtFormat))}";
 
             if (_linkTokenServiceConfig.Value.SigningKey is null)
                 throw new Exception("Link Token Service Signing Key is missing.");
