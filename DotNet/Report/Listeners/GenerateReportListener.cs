@@ -165,6 +165,10 @@ namespace LantanaGroup.Link.Report.Listeners
                                     {
                                         throw new DeadLetterException("Start and End dates must be provided.");
                                     }
+                                    if (endDate <= startDate)
+                                    {
+                                        throw new DeadLetterException("End date must be after start date.");
+                                    }
                                     
                                 }
 
