@@ -310,8 +310,9 @@ namespace LantanaGroup.Link.Report.Listeners
             var token = _createSystemToken.ExecuteAsync(_linkTokenServiceConfig.Value.SigningKey, 5).Result;
             httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
-            var censusResponse = await httpClient.GetAsync(censusRequestUrl, CancellationToken.None);
-            var censusContent = await censusResponse.Content.ReadAsStringAsync(CancellationToken.None);
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+            var censusResponse = await httpClient.GetAsync(censusRequestUrl, cts.Token);
+            var censusContent = await censusResponse.Content.ReadAsStringAsync(cts.Token);
 
             if (!censusResponse.IsSuccessStatusCode)
                 throw new TransientException("Response from Census service is not successful: " + censusContent);
