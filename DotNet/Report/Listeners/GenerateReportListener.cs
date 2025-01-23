@@ -81,7 +81,7 @@ namespace LantanaGroup.Link.Report.Listeners
         }
 
 
-        private async void StartConsumerLoop(CancellationToken cancellationToken)
+        private async Task StartConsumerLoop(CancellationToken cancellationToken)
         {
             var config = new ConsumerConfig()
             {
