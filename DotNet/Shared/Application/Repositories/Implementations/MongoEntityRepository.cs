@@ -47,7 +47,7 @@ public class MongoEntityRepository<T> : IEntityRepository<T> where T : BaseEntit
 
     public virtual T Add(T entity)
     {
-        entity.Id = Guid.NewGuid().ToString();
+        entity.Id ??= Guid.NewGuid().ToString();
 
         try
         {
