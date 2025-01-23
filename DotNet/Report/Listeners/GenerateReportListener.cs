@@ -283,7 +283,7 @@ namespace LantanaGroup.Link.Report.Listeners
                     }
                     catch (Exception ex)
                     {
-                        _logger.LogError(ex, "Error encountered in ReportScheduledListener");
+                        _logger.LogError(ex, "Error encountered in GenerateReportListener");
                         consumer.Commit();
                     }
                 }
