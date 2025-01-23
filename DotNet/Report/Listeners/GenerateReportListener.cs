@@ -55,7 +55,7 @@ namespace LantanaGroup.Link.Report.Listeners
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _kafkaConsumerFactory = kafkaConsumerFactory ?? throw new ArgumentException(nameof(kafkaConsumerFactory));
-            _serviceScopeFactory = serviceScopeFactory;
+            _serviceScopeFactory = serviceScopeFactory ?? throw new ArgumentNullException(nameof(serviceScopeFactory));
 
             _transientExceptionHandler = transientExceptionHandler ??
                                                throw new ArgumentException(nameof(_deadLetterExceptionHandler));
