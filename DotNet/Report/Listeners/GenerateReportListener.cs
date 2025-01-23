@@ -55,7 +55,7 @@ namespace LantanaGroup.Link.Report.Listeners
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _kafkaConsumerFactory = kafkaConsumerFactory ?? throw new ArgumentException(nameof(kafkaConsumerFactory));
-            _serviceScopeFactory = serviceScopeFactory;
+            _serviceScopeFactory = serviceScopeFactory ?? throw new ArgumentNullException(nameof(serviceScopeFactory));
 
             _transientExceptionHandler = transientExceptionHandler ??
                                                throw new ArgumentException(nameof(_deadLetterExceptionHandler));
@@ -81,12 +81,15 @@ namespace LantanaGroup.Link.Report.Listeners
         }
 
 
-        private async void StartConsumerLoop(CancellationToken cancellationToken)
+        private async Task StartConsumerLoop(CancellationToken cancellationToken)
         {
             var config = new ConsumerConfig()
             {
                 GroupId = ReportConstants.ServiceName,
-                EnableAutoCommit = false
+                EnableAutoCommit = false,
+                AutoOffsetReset = AutoOffsetReset.Earliest,
+                SessionTimeoutMs = 10000,
+                MaxPollIntervalMs = 300000
             };
 
             using var consumer = _kafkaConsumerFactory.CreateConsumer(config);
@@ -110,7 +113,7 @@ namespace LantanaGroup.Link.Report.Listeners
 
                             try
                             {
-                                var scope = _serviceScopeFactory.CreateScope();
+                                using var scope = _serviceScopeFactory.CreateScope();
                                 var measureReportScheduledManager =
                                     scope.ServiceProvider.GetRequiredService<IReportScheduledManager>();
 
@@ -130,6 +133,10 @@ namespace LantanaGroup.Link.Report.Listeners
                                 }
 
                                 result.Message.Headers.TryGetLastBytes("X-Report-Tracking-Id", out var headerValue);
+                                if (headerValue == null)
+                                {
+                                    throw new DeadLetterException("Header 'X-Report-Tracking-Id' not found in message headers.");
+                                }
                                 var newReportId = System.Text.Encoding.UTF8.GetString(headerValue);
 
                                 //If we are re-running an existing report, fetch the details from the database and replace the Values retrieved from the message
@@ -157,6 +164,10 @@ namespace LantanaGroup.Link.Report.Listeners
                                     if (startDate == null || endDate == null)
                                     {
                                         throw new DeadLetterException("Start and End dates must be provided.");
+                                    }
+                                    if (endDate <= startDate)
+                                    {
+                                        throw new DeadLetterException("End date must be after start date.");
                                     }
                                     
                                 }
@@ -299,8 +310,9 @@ namespace LantanaGroup.Link.Report.Listeners
             var token = await _createSystemToken.ExecuteAsync(_linkTokenServiceConfig.Value.SigningKey, 5);
             httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
-            var censusResponse = await httpClient.GetAsync(censusRequestUrl, CancellationToken.None);
-            var censusContent = await censusResponse.Content.ReadAsStringAsync(CancellationToken.None);
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+            var censusResponse = await httpClient.GetAsync(censusRequestUrl, cts.Token);
+            var censusContent = await censusResponse.Content.ReadAsStringAsync(cts.Token);
 
             if (!censusResponse.IsSuccessStatusCode)
                 throw new TransientException("Response from Census service is not successful: " + censusContent);
