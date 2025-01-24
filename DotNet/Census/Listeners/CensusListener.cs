@@ -160,7 +160,11 @@ public class CensusListener : BackgroundService
                 {
                     _logger.LogError(ex, "Error consuming message for topics: [{1}] at {2}", string.Join(", ", kafkaConsumer.Subscription), DateTime.UtcNow);
 
-                    if (ex.Error.Code == ErrorCode.UnknownTopicOrPart)
+                    if(ex.Error.Code == ErrorCode.Local_ValueDeserialization)
+                    {
+                        _logger.LogError(ex, "Error deserializing message for topics: [{1}] at {2}. This error usually means that the FHIR List returned contained 0 elements. Message will be sent to DeadLetter queue.", string.Join(", ", kafkaConsumer.Subscription), DateTime.UtcNow);
+                    } 
+                    else if (ex.Error.Code == ErrorCode.UnknownTopicOrPart)
                     {
                         throw new OperationCanceledException(ex.Error.Reason, ex);
                     }
