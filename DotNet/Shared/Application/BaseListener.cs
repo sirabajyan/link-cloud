@@ -150,5 +150,6 @@ public abstract class BaseListener<MessageType, ConsumeKeyType, ConsumeValueType
     protected abstract ConsumerConfig CreateConsumerConfig();
     protected abstract string ExtractFacilityId(ConsumeResult<ConsumeKeyType, ConsumeValueType> consumeResult);
     protected abstract string ExtractCorrelationId(ConsumeResult<ConsumeKeyType, ConsumeValueType> consumeResult);
+    protected abstract string ExtractReportTrackingId(ConsumeResult<ConsumeKeyType, ConsumeValueType> consumeResult);
     protected abstract Task ExecuteListenerAsync(ConsumeResult<ConsumeKeyType, ConsumeValueType> consumeResult, CancellationToken cancellationToken = default);
 }

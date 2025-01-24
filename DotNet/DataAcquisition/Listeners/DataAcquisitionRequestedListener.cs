@@ -46,7 +46,7 @@ public class DataAcquisitionRequestedListener : BaseListener<DataAcquisitionRequ
 
         try
         {
-            reportTrackingId = ExtractReportId(consumeResult);
+            reportTrackingId = ExtractReportTrackingId(consumeResult);
         }
         catch (ArgumentNullException ex)
         {
@@ -112,7 +112,7 @@ public class DataAcquisitionRequestedListener : BaseListener<DataAcquisitionRequ
         return correlationId;
     }
 
-    private string ExtractReportId(ConsumeResult<string, DataAcquisitionRequested> consumeResult)
+    protected override string ExtractReportTrackingId(ConsumeResult<string, DataAcquisitionRequested> consumeResult)
     {
         var cIBytes = consumeResult.Headers
             .FirstOrDefault(x => x.Key.ToLower() == DataAcquisitionConstants.HeaderNames.ReportId.ToLower())
