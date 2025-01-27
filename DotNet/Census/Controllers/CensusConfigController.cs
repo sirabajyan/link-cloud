@@ -48,7 +48,7 @@ public class CensusConfigController : Controller
             return BadRequest("ScheduledTrigger is required.");
         }
 
-        if (CronExpression.IsValidExpression(censusConfig.ScheduledTrigger))
+        if (!CronExpression.IsValidExpression(censusConfig.ScheduledTrigger))
         {
            return BadRequest("ScheduledTrigger is not a valid cron expression.");
         }
@@ -135,7 +135,7 @@ public class CensusConfigController : Controller
         {
             return BadRequest("ScheduledTrigger is required.");
         } 
-        else if (CronExpression.IsValidExpression(censusConfig.ScheduledTrigger))
+        else if (!CronExpression.IsValidExpression(censusConfig.ScheduledTrigger))
         {
             return BadRequest("ScheduledTrigger is not a valid cron expression.");
         }
