@@ -48,7 +48,8 @@ namespace QueryDispatch.Domain.Managers
 
                 var headers = new Headers
                         {
-                            { "X-Correlation-Id", System.Text.Encoding.ASCII.GetBytes(scheduledReport.ReportPeriods[0].CorrelationId) }
+                            { "X-Correlation-Id", System.Text.Encoding.ASCII.GetBytes(scheduledReport.ReportPeriods[0].CorrelationId) },
+                            { "X-Report-Tracking-Id", System.Text.Encoding.ASCII.GetBytes(scheduledReport.ReportPeriods[0].ReportTrackingId) }
                         };
 
                 var auditMessage = new AuditEventMessage
