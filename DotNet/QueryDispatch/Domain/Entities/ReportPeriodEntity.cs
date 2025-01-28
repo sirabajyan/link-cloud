@@ -9,5 +9,6 @@
         public DateTime CreateDate { get; set; }
         public DateTime? ModifyDate { get; set; }
         public string CorrelationId { get; set; }
+        public string ReportTrackingId { get; set; }
     }
 }
