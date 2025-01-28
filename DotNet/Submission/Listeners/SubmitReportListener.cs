@@ -1,5 +1,6 @@
 ﻿using Confluent.Kafka;
 using Confluent.Kafka.Extensions.Diagnostics;
+using Hl7.Fhir.ElementModel.Types;
 using Hl7.Fhir.Model;
 using Hl7.Fhir.Serialization;
 using LantanaGroup.Link.Shared.Application.Error.Exceptions;
@@ -8,8 +9,10 @@ using LantanaGroup.Link.Shared.Application.Interfaces;
 using LantanaGroup.Link.Shared.Application.Interfaces.Services.Security.Token;
 using LantanaGroup.Link.Shared.Application.Models;
 using LantanaGroup.Link.Shared.Application.Models.Configs;
+using LantanaGroup.Link.Shared.Application.Models.Telemetry;
 using LantanaGroup.Link.Shared.Settings;
 using LantanaGroup.Link.Submission.Application.Config;
+using LantanaGroup.Link.Submission.Application.Interfaces;
 using LantanaGroup.Link.Submission.Application.Models;
 using LantanaGroup.Link.Submission.Settings;
 using Microsoft.Extensions.Options;
@@ -37,6 +40,8 @@ namespace LantanaGroup.Link.Submission.Listeners
         private readonly IOptions<LinkTokenServiceSettings> _linkTokenServiceConfig;
         private readonly ICreateSystemToken _createSystemToken;
 
+        private readonly ISubmissionServiceMetrics _submissionServiceMetrics;
+
         private string Name => this.GetType().Name;
 
         public SubmitReportListener(ILogger<SubmitReportListener> logger,
@@ -46,7 +51,8 @@ namespace LantanaGroup.Link.Submission.Listeners
             ITransientExceptionHandler<SubmitReportKey, SubmitReportValue> transientExceptionHandler,
             IDeadLetterExceptionHandler<SubmitReportKey, SubmitReportValue> deadLetterExceptionHandler,
             IOptions<LinkTokenServiceSettings> linkTokenServiceConfig, ICreateSystemToken createSystemToken, 
-            IOptions<ServiceRegistry> serviceRegistry)
+            IOptions<ServiceRegistry> serviceRegistry,
+            ISubmissionServiceMetrics submissionServiceMetrics)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _kafkaConsumerFactory = kafkaConsumerFactory ?? throw new ArgumentException(nameof(kafkaConsumerFactory));
@@ -68,6 +74,8 @@ namespace LantanaGroup.Link.Submission.Listeners
             _createSystemToken = createSystemToken ?? throw new ArgumentNullException(nameof(createSystemToken));
             
             _serviceRegistry = serviceRegistry?.Value ?? throw new ArgumentNullException(nameof(serviceRegistry));
+
+            _submissionServiceMetrics = submissionServiceMetrics;
         }
 
         protected override Task ExecuteAsync(CancellationToken stoppingToken)
@@ -80,7 +88,7 @@ namespace LantanaGroup.Link.Submission.Listeners
             // If a URL, may contain |0.1.2 representing the version at the end of the URL
             // Remove it so that we're looking at the generic URL, not the URL specific to a measure version
             string measureWithoutVersion = measure.Contains("|") ?
-                measure.Substring(0, measure.LastIndexOf("|", StringComparison.Ordinal)) :
+                measure.Substring(0, measure.LastIndexOf("|", System.StringComparison.Ordinal)) :
                 measure;
 
             var urlShortName = _submissionConfig.MeasureNames.FirstOrDefault(x => x.Url == measureWithoutVersion || x.MeasureId == measureWithoutVersion)?.ShortName;
@@ -110,7 +118,7 @@ namespace LantanaGroup.Link.Submission.Listeners
             {
                 consumer.Subscribe(nameof(KafkaTopic.SubmitReport));
                 _logger.LogInformation(
-                    $"Started consumer for topic '{nameof(KafkaTopic.SubmitReport)}' at {DateTime.UtcNow}");
+                    $"Started consumer for topic '{nameof(KafkaTopic.SubmitReport)}' at {System.DateTime.UtcNow}");
 
                 while (!cancellationToken.IsCancellationRequested)
                 {
@@ -165,7 +173,7 @@ namespace LantanaGroup.Link.Submission.Listeners
                                 string dtFormat = "yyyy-MM-ddTHH:mm:ss.fffZ";
 
                                 #region Census Admitted Patient List
-                                string censusRequestUrl = $"{_serviceRegistry.CensusServiceApiUrl}/Census/{key.FacilityId}/history/admitted?startDate={key.StartDate.ToString(dtFormat)}&endDate={key.EndDate.ToString(dtFormat)}";
+                                string censusRequestUrl = $"http://localhost:5234/api/Census/{key.FacilityId}/history/admitted?startDate={key.StartDate.ToString(dtFormat)}&endDate={key.EndDate.ToString(dtFormat)}";
 
                                 //TODO: add method to get key that includes looking at redis for future use case
                                 if (_linkTokenServiceConfig.Value.SigningKey is null)
@@ -175,7 +183,6 @@ namespace LantanaGroup.Link.Submission.Listeners
                                 var token = _createSystemToken.ExecuteAsync(_linkTokenServiceConfig.Value.SigningKey, 5).Result;
                                 httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
-                                _logger.LogDebug("Requesting census from Census service: " + censusRequestUrl);
                                 var censusResponse = await httpClient.GetAsync(censusRequestUrl, consumeCancellationToken);
                                 var censusContent = await censusResponse.Content.ReadAsStringAsync(consumeCancellationToken);
 
@@ -294,6 +301,8 @@ namespace LantanaGroup.Link.Submission.Listeners
 
                                 var batchSize = _submissionConfig.PatientBundleBatchSize;
 
+                                List<string> patientFilesWritten = new List<string>();
+
                                 while (patientIds.Any())
                                 {
                                     var otherResourcesBag = new ConcurrentBag<Bundle>();
@@ -314,12 +323,13 @@ namespace LantanaGroup.Link.Submission.Listeners
                                     {
                                         tasks.Add(Task.Run(async () =>
                                         {
-                                            var otherResources = await CreatePatientBundleFiles(submissionDirectory,
+                                            var resultModel = await CreatePatientBundleFiles(submissionDirectory,
                                                 pid,
                                                 facilityId,
                                                 key.ReportScheduleId, consumeCancellationToken);
 
-                                            otherResourcesBag.Add(otherResources);
+                                            patientFilesWritten.Add(resultModel.FilePath);
+                                            otherResourcesBag.Add(resultModel.OtherResources);
                                         }));
                                     }
 
@@ -345,8 +355,10 @@ namespace LantanaGroup.Link.Submission.Listeners
                                 fileName = "other-resources.json";
                                 contents = await fhirSerializer.SerializeToStringAsync(otherResourcesBundle);
 
-                                await File.WriteAllTextAsync(submissionDirectory + "/" + fileName, contents,
-                                    consumeCancellationToken);
+                                await File.WriteAllTextAsync(submissionDirectory + "/" + fileName, contents, consumeCancellationToken);
+
+                                //Generate Metrics
+                                GenerateSubmissionMetrics(otherResourcesBundle,  patientFilesWritten, facilityId, key.StartDate, key.EndDate);
 
                                 #endregion
                             }
@@ -377,7 +389,7 @@ namespace LantanaGroup.Link.Submission.Listeners
                     }
                     catch (ConsumeException ex)
                     {
-                        _logger.LogError(ex, "Error consuming message for topics: [{1}] at {2}", string.Join(", ", consumer.Subscription), DateTime.UtcNow);
+                        _logger.LogError(ex, "Error consuming message for topics: [{1}] at {2}", string.Join(", ", consumer.Subscription), System.DateTime.UtcNow);
 
                         if (ex.Error.Code == ErrorCode.UnknownTopicOrPart)
                         {
@@ -403,6 +415,83 @@ namespace LantanaGroup.Link.Submission.Listeners
                 _logger.LogError(oce, $"Operation Canceled: {oce.Message}");
                 consumer.Close();
                 consumer.Dispose();
+            }
+        }
+
+        protected void GenerateSubmissionMetrics(Bundle? otherResourcesBundle, List<string>? patientFilesWritten, string facilityId, System.DateTime startDate, System.DateTime endDate )
+        {
+            if(otherResourcesBundle == null) { return; }    
+            if (patientFilesWritten == null || patientFilesWritten.Count == 0) { return; }
+
+            var totalResources = otherResourcesBundle.GetResources().Count();
+            var resourceTypes = new Dictionary<string, int>();
+            var medicationCodes = new Dictionary<string, int>();
+            foreach (var patientFile in patientFilesWritten)
+            {
+                string contents = File.ReadAllText(patientFile);
+                var bundle = JsonSerializer.Deserialize<Bundle>(contents, new JsonSerializerOptions().ForFhir());
+
+                var resources = bundle.GetResources();
+
+                if (resources == null)
+                    continue;
+
+                foreach (var resource in resources)
+                {
+                    totalResources += 1;
+
+                    var resType = resource.TypeName;
+
+                    if (!resourceTypes.TryAdd(resType, 1))
+                    {
+                        resourceTypes[resType] += 1;
+                    }
+
+                    if (resource is Medication)
+                    {
+                        var med = (Medication)resource;
+                        var code = med.Code?.Coding?.FirstOrDefault();
+                        if (code != null)
+                        {
+                            string val = $"{code.Display}|{code.Code}|{code.System}";
+                            if (!medicationCodes.TryAdd(val, 1))
+                            {
+                                medicationCodes[val] += 1;
+                            }
+                        }
+                    }
+                }
+            }
+
+            //Total resources submitted
+            _submissionServiceMetrics.IncrementResourcesSubmittedCounter(totalResources, new List<KeyValuePair<string, object?>>() {
+                new KeyValuePair<string, object?>(DiagnosticNames.FacilityId, facilityId),
+                new KeyValuePair<string, object?>(DiagnosticNames.PeriodStart, startDate),
+                new KeyValuePair<string, object?>(DiagnosticNames.PeriodEnd, endDate)
+            });
+
+            //ResourceTypes
+            foreach (var resType in resourceTypes)
+            {
+                _submissionServiceMetrics.IncrementResourceTypeCounter(resType.Value,
+                    new List<KeyValuePair<string, object?>>()
+                    {
+                        new KeyValuePair<string, object?>(DiagnosticNames.FacilityId, facilityId),
+                        new KeyValuePair<string, object?>(DiagnosticNames.Resource, resType.Key)
+                    });
+            }
+
+            //Medication Codes
+            foreach (var resType in resourceTypes)
+            {
+                _submissionServiceMetrics.IncrementMedicationCounter(resType.Value,
+                    new List<KeyValuePair<string, object?>>()
+                    {
+                        new KeyValuePair<string, object?>(DiagnosticNames.FacilityId, facilityId),
+                        new KeyValuePair<string, object?>(DiagnosticNames.Resource, resType.Key),
+                        new KeyValuePair<string, object?>(DiagnosticNames.PeriodStart, startDate),
+                        new KeyValuePair<string, object?>(DiagnosticNames.PeriodEnd, endDate)
+                    });
             }
         }
 
@@ -438,8 +527,10 @@ namespace LantanaGroup.Link.Submission.Listeners
         /// <param name="endDate"></param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        private async Task<Bundle> CreatePatientBundleFiles(string submissionDirectory, string patientId, string facilityId, string reportScheduleId, CancellationToken cancellationToken)
+        private async Task<CreatePatientBundleResult> CreatePatientBundleFiles(string submissionDirectory, string patientId, string facilityId, string reportScheduleId, CancellationToken cancellationToken )
         {
+            var returnModel = new CreatePatientBundleResult();
+
             var options = new JsonSerializerOptions().ForFhir(ModelInfo.ModelInspector);
 
             var httpClient = _httpClient.CreateClient();
@@ -475,19 +566,26 @@ namespace LantanaGroup.Link.Submission.Listeners
                                         patientSubmissionBundle.OtherResources: {patientSubmissionBundle?.OtherResources == null}");
                 }
 
-                var otherResources = patientSubmissionBundle.OtherResources;
+                returnModel.OtherResources = patientSubmissionBundle.OtherResources;
 
                 string fileName = $"patient-{patientId}.json";
                 string contents = await new FhirJsonSerializer().SerializeToStringAsync(patientSubmissionBundle.PatientResources);
 
-                await File.WriteAllTextAsync(submissionDirectory + "/" + fileName, contents, cancellationToken);
+                returnModel.FilePath = submissionDirectory + "/" + fileName;
+                await File.WriteAllTextAsync(returnModel.FilePath, contents, cancellationToken);
 
-                return otherResources;
+                return returnModel;
             }
             catch (Exception ex)
             {
                 throw new TransientException(ex.Message, ex.InnerException);
             }
+        }
+
+        public class CreatePatientBundleResult
+        {
+            public Bundle OtherResources { get; set; } = new Bundle();
+            public string FilePath { get; set; } = string.Empty;
         }
     }
 }
